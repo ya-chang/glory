@@ -6,6 +6,7 @@
 <title>设置 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="common.css">
 </head>
 <body>
 
@@ -110,46 +111,36 @@
   <p>🏆 荣耀社区 · 全职高手同人站</p>
 </footer>
 
+<script src="common.js"></script>
 <script src="players.js"></script>
 <script>
-  const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
-
   // 检查登录
-  const token = localStorage.getItem('glory_token');
-  if (!token) {
-    alert('请先登录');
-    window.location.href = 'index.html';
-  }
+  if (!getToken()) { alert('请先登录'); window.location.href = 'index.html'; }
 
   // 初始化下拉
-  const playerSelect = document.getElementById('s_favPlayer');
-  PLAYERS.forEach(p => {
-    const opt = document.createElement('option');
+  var playerSelect = document.getElementById('s_favPlayer');
+  PLAYERS.forEach(function(p) {
+    var opt = document.createElement('option');
     opt.value = p.name;
-    opt.textContent = `${p.name}（${p.gameId.split('/')[0].trim()}）`;
+    opt.textContent = p.name + '（' + p.gameId.split('/')[0].trim() + '）';
     playerSelect.appendChild(opt);
   });
 
-  const teamSelect = document.getElementById('s_favTeam');
-  ['兴欣','嘉世','霸图','蓝雨','微草','轮回','雷霆','烟雨','虚空','呼啸','三零一','义斩'].forEach(t => {
-    const opt = document.createElement('option');
+  var teamSelect = document.getElementById('s_favTeam');
+  ['兴欣','嘉世','霸图','蓝雨','微草','轮回','雷霆','烟雨','虚空','呼啸','三零一','义斩'].forEach(function(t) {
+    var opt = document.createElement('option');
     opt.value = t; opt.textContent = t;
     teamSelect.appendChild(opt);
   });
 
+  var pendingAvatar = null;  // null=未修改, ''=已清除, 'url'=新上传
+  var existingAvatar = '';
+
   // 加载用户资料
   async function loadSettings() {
     try {
-      const res = await fetch(`${API_BASE}/api/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.status === 401) {
-        window.location.href = 'index.html';
-        return;
-      }
-      if (!res.ok) return;
-      const profile = await res.json();
-
+      var profile = await apiGet('/api/profile');
+      if (!profile) return;
       if (profile.username) document.getElementById('s_name').value = profile.username;
       if (profile.bio) document.getElementById('s_bio').value = profile.bio;
       if (profile.favPlayer) document.getElementById('s_favPlayer').value = profile.favPlayer;
@@ -159,84 +150,42 @@
         document.querySelector('#avatarPreview img').src = profile.avatar;
         document.getElementById('avatarPreview').style.display = 'block';
       }
-    } catch (e) {
-      console.error('loadSettings error:', e);
-    }
+    } catch(e) { console.error('loadSettings error:', e); }
   }
-
-  // 追踪头像状态：null=未修改, ''=已清除, 'data:...'=新上传
-  let pendingAvatar = null;
-  // 记录已有的头像 URL（加载时从服务端获取）
-  let existingAvatar = '';
 
   function previewAvatar(input) {
-    const file = input.files[0];
+    var file = input.files[0];
     if (!file) return;
-    // 验证文件类型
-    if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
-      input.value = '';
-      return;
-    }
-    // 验证文件大小（10MB，压缩后再上传）
-    if (file.size > 10 * 1024 * 1024) {
-      alert('图片文件过大，请选择 10MB 以内的图片');
-      input.value = '';
-      return;
-    }
-    // 压缩图片后再转 base64
-    compressImage(file, 200, 0.8).then(dataUrl => {
-      pendingAvatar = dataUrl;
-      document.querySelector('#avatarPreview img').src = dataUrl;
-      document.getElementById('avatarPreview').style.display = 'block';
-    }).catch(() => {
-      alert('图片处理失败，请重试');
-    });
-  }
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { alert('图片过大，请选择 10MB 以内'); input.value = ''; return; }
 
-  // 压缩图片到指定最大宽高，返回 base64
-  function compressImage(file, maxSize, quality) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          if (w > maxSize || h > maxSize) {
-            if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-            else { w = Math.round(w * maxSize / h); h = maxSize; }
-          }
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+    // 显示本地预览
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.querySelector('#avatarPreview img').src = e.target.result;
+      document.getElementById('avatarPreview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    // 压缩并上传到图床
+    showToast('正在上传图片...', '');
+    compressAndUpload(file, 200, 0.8).then(function(url) {
+      pendingAvatar = url;
+      document.querySelector('#avatarPreview img').src = url;
+      showToast('图片上传成功', 'success');
+    }).catch(function() {
+      alert('图片上传失败，请重试');
+      pendingAvatar = null;
     });
   }
 
   async function saveProfile() {
-    const name = document.getElementById('s_name').value.trim();
+    var name = document.getElementById('s_name').value.trim();
     if (!name || name.length < 2) { alert('昵称至少 2 个字符'); return; }
 
-    // 决定头像值：
-    // - pendingAvatar === null → 用户没改头像，保留已有的 existingAvatar
-    // - pendingAvatar === ''   → 用户清除了头像
-    // - pendingAvatar === 'data:...' → 用户上传了新头像
-    let avatarValue;
-    if (pendingAvatar !== null) {
-      avatarValue = pendingAvatar; // 新上传或已清除
-    } else {
-      avatarValue = existingAvatar; // 未修改，保留原有
-    }
+    var avatarValue = pendingAvatar !== null ? pendingAvatar : existingAvatar;
 
-    const data = {
+    var data = {
       username: name,
       avatar: avatarValue,
       bio: document.getElementById('s_bio').value.trim(),
@@ -245,72 +194,37 @@
     };
 
     try {
-      const res = await fetch(`${API_BASE}/api/profile`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-      if (res.status === 401) { window.location.href = 'index.html'; return; }
-      const result = await res.json();
-      if (!res.ok) {
-        alert('保存失败：' + (result.error || `服务器返回 ${res.status}`));
-        return;
-      }
-      // 更新本地缓存
-      const user = JSON.parse(localStorage.getItem('glory_user') || '{}');
+      var result = await apiPut('/api/profile', data);
+      if (!result) return;
+      var user = getUser() || {};
       user.username = name;
       localStorage.setItem('glory_user', JSON.stringify(user));
-      showToast('个人资料已保存 ✅');
-    } catch (e) {
-      console.error('saveProfile error:', e);
-      alert('网络错误，请稍后重试');
+      showToast('个人资料已保存 ✅', 'success');
+    } catch(e) {
+      showToast('保存失败：' + (e.message || '网络错误'), 'error');
     }
   }
 
   async function savePassword() {
-    const currentPwd = document.getElementById('s_currentPassword').value;
-    const newPwd = document.getElementById('s_newPassword').value;
-    const confirmPwd = document.getElementById('s_confirmPassword').value;
+    var currentPwd = document.getElementById('s_currentPassword').value;
+    var newPwd = document.getElementById('s_newPassword').value;
+    var confirmPwd = document.getElementById('s_confirmPassword').value;
 
     if (!currentPwd) { alert('请输入当前密码'); return; }
     if (!newPwd) { alert('请输入新密码'); return; }
-    if (newPwd !== confirmPwd) { alert('两次密码输入不一致'); return; }
+    if (newPwd !== confirmPwd) { alert('两次密码不一致'); return; }
     if (newPwd.length < 6) { alert('新密码至少 6 位'); return; }
 
     try {
-      const res = await fetch(`${API_BASE}/api/password`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ currentPassword: currentPwd, newPassword: newPwd })
-      });
-      const data = await res.json();
-      if (res.status === 401) { window.location.href = 'index.html'; return; }
-      if (!res.ok) {
-        alert('修改失败：' + (data.error || '未知错误'));
-        return;
-      }
+      var result = await apiPut('/api/password', { currentPassword: currentPwd, newPassword: newPwd });
+      if (!result) return;
       document.getElementById('s_currentPassword').value = '';
       document.getElementById('s_newPassword').value = '';
       document.getElementById('s_confirmPassword').value = '';
-      showToast('密码修改成功 🔒');
-    } catch (e) {
-      alert('网络错误，请稍后重试');
+      showToast('密码修改成功 🔒', 'success');
+    } catch(e) {
+      showToast('修改失败：' + (e.message || '网络错误'), 'error');
     }
-  }
-
-  function showToast(msg) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
   }
 
   loadSettings();

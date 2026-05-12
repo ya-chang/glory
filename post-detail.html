@@ -6,6 +6,7 @@
 <title>帖子详情 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="common.css">
 <meta property="og:title" content="帖子详情 · 荣耀社区">
 <meta property="og:description" content="荣耀社区讨论区帖子详情">
 <meta property="og:image" content="https://ya-chang.github.io/glory/favicon.png">
@@ -50,6 +51,7 @@
   <p>🏆 荣耀社区 · 全职高手同人站</p>
 </footer>
 
+<script src="common.js"></script>
 <script src="forum.js"></script>
 <script>
   const FAVORITE_KEY = 'glory_forum_favorites';
@@ -357,15 +359,7 @@
     }
   }
 
-  function showToast(msg) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
-  }
-
+  
   init();
 </script>
 

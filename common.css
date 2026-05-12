@@ -1,0 +1,55 @@
+/* ===== 荣耀社区 - 公共组件样式 ===== */
+/* 从各页面提取的重复样式，统一管理 */
+
+/* Toast 通知 */
+.toast-msg {
+  position: fixed; bottom: 80px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0,0,0,0.8); color: #fff;
+  padding: 10px 24px; border-radius: 8px;
+  font-size: 14px; z-index: 1000; opacity: 0;
+  transition: all 0.3s ease; pointer-events: none;
+  max-width: 90vw; text-align: center;
+}
+.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-error { background: rgba(198,40,40,0.9) !important; }
+.toast-success { background: rgba(46,125,50,0.9) !important; }
+
+/* 设置卡片 */
+.settings-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.settings-card h2 {
+  font-size: 17px; font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 页面切换过渡 */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 骨架屏 */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-shine {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

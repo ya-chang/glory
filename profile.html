@@ -6,6 +6,7 @@
 <title>个人主页 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="common.css">
 <meta property="og:title" content="个人主页 · 荣耀社区">
 <meta property="og:description" content="管理你的荣耀社区个人资料、帖子和 OC 角色">
 <meta property="og:image" content="https://ya-chang.github.io/glory/favicon.png">
@@ -159,7 +160,9 @@
   <p>🏆 荣耀社区 · 全职高手同人站</p>
 </footer>
 
+<script src="common.js"></script>
 <script src="forum.js"></script>
+<script src="common.js"></script>
 <script src="oc.js"></script>
 <script>
   // ===== 检查登录 =====
@@ -438,15 +441,6 @@
     } catch (e) {
       document.getElementById('myOCs').innerHTML = '<p style="color:var(--text-3);padding:20px 0;">加载失败</p>';
     }
-  }
-
-  function showToast(msg) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.textContent = msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
   }
 
   // Tab 切换
