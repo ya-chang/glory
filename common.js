@@ -7,14 +7,22 @@ const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
 (function() {
   // 页面离开时轻微淡出
   window.addEventListener('beforeunload', function() {
-    document.body.style.opacity = '0.6';
-    document.body.style.transition = 'opacity 0.1s ease';
+    document.body.style.opacity = '0.5';
+    document.body.style.transition = 'opacity 0.15s ease';
   });
-  // 浏览器后退（bfcache恢复）时重置透明度
+  // 浏览器后退（bfcache恢复）时重置透明度并重新播放进入动画
   window.addEventListener('pageshow', function(e) {
     if (e.persisted) {
       document.body.style.opacity = '1';
       document.body.style.transition = 'none';
+      document.body.classList.remove('page-enter', 'page-visible');
+      requestAnimationFrame(function() {
+        document.body.classList.add('page-enter');
+        requestAnimationFrame(function() {
+          document.body.classList.add('page-visible');
+          document.body.classList.remove('page-enter');
+        });
+      });
     }
   });
 })();
@@ -103,6 +111,58 @@ async function fetchWithRetry(url, options, retries, delay) {
     }
   }
 }
+
+/* ===== 错误边界 ===== */
+function showErrorState(container, message, retryFn) {
+  if (typeof container === 'string') container = document.getElementById(container);
+  if (!container) return;
+  container.innerHTML =
+    '<div style="text-align:center;padding:40px 20px;color:var(--text-3);">' +
+      '<div style="font-size:40px;margin-bottom:12px;">😵</div>' +
+      '<p style="font-size:15px;font-weight:500;color:var(--text-2);margin-bottom:4px;">' + (message || '加载失败') + '</p>' +
+      '<p style="font-size:13px;margin-bottom:16px;">请检查网络后重试</p>' +
+      (retryFn ? '<button onclick="this.parentElement.parentElement.innerHTML=\'\'" class="btn btn-primary" style="font-size:13px;padding:8px 24px;" id="__retryBtn">点击重试</button>' : '') +
+    '</div>';
+  if (retryFn) {
+    var btn = container.querySelector('#__retryBtn');
+    if (btn) {
+      btn.removeAttribute('onclick');
+      btn.addEventListener('click', function() {
+        container.innerHTML = '<p style="color:var(--text-3);padding:20px 0;text-align:center;">加载中...</p>';
+        retryFn();
+      });
+    }
+  }
+}
+
+/* 包装 API 调用，自动处理错误 */
+async function safeApiCall(apiFn, containerId, retryFn) {
+  try {
+    return await apiFn();
+  } catch (e) {
+    console.error('API error:', e);
+    if (containerId) showErrorState(containerId, '加载失败：' + (e.message || '网络错误'), retryFn);
+    throw e;
+  }
+}
+
+/* 全局未捕获错误处理 */
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
+/* ===== 页面进入动画 ===== */
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('page-enter');
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        document.body.classList.add('page-visible');
+        document.body.classList.remove('page-enter');
+      });
+    });
+  });
+})();
 
 /* ===== Toast 通知 ===== */
 function showToast(msg, type) {

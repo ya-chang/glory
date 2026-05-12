@@ -74,6 +74,7 @@
       renderReplies();
     } catch (e) {
       console.error('post-detail init error:', e);
+      showErrorState('postSection', '帖子加载失败', function() { init(); });
     }
   }
 

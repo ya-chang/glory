@@ -145,6 +145,7 @@
       }
     } catch (e) {
       console.error('loadCommunityData error:', e);
+      showErrorState('hotPosts', '加载失败');
     }
   }
   loadCommunityData();

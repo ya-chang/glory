@@ -214,6 +214,8 @@
       }
     } catch (e) {
       console.error('forum-home init error:', e);
+      showErrorState('hotPosts', '加载失败');
+      showErrorState('recentPosts', '加载失败');
     }
   }
 
