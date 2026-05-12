@@ -6,6 +6,10 @@
 <title>个人主页 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<meta property="og:title" content="个人主页 · 荣耀社区">
+<meta property="og:description" content="管理你的荣耀社区个人资料、帖子和 OC 角色">
+<meta property="og:image" content="https://ya-chang.github.io/glory/favicon.png">
+<meta property="og:type" content="profile">
 </head>
 <body>
 
@@ -309,7 +313,7 @@
       // 头像
       const avatarEl = document.getElementById('profileAvatar');
       if (profileData.avatar) {
-        avatarEl.innerHTML = `<img src="${profileData.avatar}" alt="${profileData.username}">`;
+        avatarEl.innerHTML = `<img src="${profileData.avatar}" alt="${profileData.username}" loading="lazy">`;
       } else {
         avatarEl.textContent = (profileData.username || '荣')[0];
       }
@@ -419,7 +423,7 @@
         <a class="oc-card" href="oc-detail.html?id=${oc.id}">
           <div class="oc-card-top"></div>
           <div class="oc-card-body">
-            <div class="oc-avatar">${oc.avatar ? `<img src="${oc.avatar}" alt="${oc.name}">` : oc.gameId}</div>
+            <div class="oc-avatar">${oc.avatar ? `<img src="${oc.avatar}" alt="${oc.name}" loading="lazy">` : oc.gameId}</div>
             <div class="oc-info">
               <h3>${oc.name}</h3>
               <div class="game-id">${oc.gameId}</div>

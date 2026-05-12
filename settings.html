@@ -155,6 +155,7 @@
       if (profile.favPlayer) document.getElementById('s_favPlayer').value = profile.favPlayer;
       if (profile.favTeam) document.getElementById('s_favTeam').value = profile.favTeam;
       if (profile.avatar) {
+        existingAvatar = profile.avatar;
         document.querySelector('#avatarPreview img').src = profile.avatar;
         document.getElementById('avatarPreview').style.display = 'block';
       }
@@ -163,13 +164,34 @@
     }
   }
 
+  // 追踪头像状态：null=未修改, ''=已清除, 'data:...'=新上传
+  let pendingAvatar = null;
+  // 记录已有的头像 URL（加载时从服务端获取）
+  let existingAvatar = '';
+
   function previewAvatar(input) {
     const file = input.files[0];
     if (!file) return;
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      alert('请选择图片文件');
+      input.value = '';
+      return;
+    }
+    // 验证文件大小（2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      alert('图片文件过大，请选择 2MB 以内的图片');
+      input.value = '';
+      return;
+    }
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.querySelector('#avatarPreview img').src = e.target.result;
+      pendingAvatar = e.target.result;
+      document.querySelector('#avatarPreview img').src = pendingAvatar;
       document.getElementById('avatarPreview').style.display = 'block';
+    };
+    reader.onerror = function() {
+      alert('图片读取失败，请重试');
     };
     reader.readAsDataURL(file);
   }
@@ -178,10 +200,20 @@
     const name = document.getElementById('s_name').value.trim();
     if (!name || name.length < 2) { alert('昵称至少 2 个字符'); return; }
 
-    const avatarImg = document.querySelector('#avatarPreview img');
+    // 决定头像值：
+    // - pendingAvatar === null → 用户没改头像，保留已有的 existingAvatar
+    // - pendingAvatar === ''   → 用户清除了头像
+    // - pendingAvatar === 'data:...' → 用户上传了新头像
+    let avatarValue;
+    if (pendingAvatar !== null) {
+      avatarValue = pendingAvatar; // 新上传或已清除
+    } else {
+      avatarValue = existingAvatar; // 未修改，保留原有
+    }
+
     const data = {
       username: name,
-      avatar: (avatarImg.src && document.getElementById('avatarPreview').style.display !== 'none') ? avatarImg.src : '',
+      avatar: avatarValue,
       bio: document.getElementById('s_bio').value.trim(),
       favPlayer: document.getElementById('s_favPlayer').value,
       favTeam: document.getElementById('s_favTeam').value

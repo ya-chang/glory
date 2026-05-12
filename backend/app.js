@@ -61,17 +61,57 @@ const app = express();
 
 // CORS - 允许 GitHub Pages 和本地开发
 app.use(cors({
-  origin: [
-    'https://ya-chang.github.io',
-    'http://localhost:3000',
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-  ],
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://ya-chang.github.io'
+    : ['https://ya-chang.github.io', 'http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json({ limit: '5mb' }));
+
+// ============ Rate Limiting ============
+const rateLimitStore = {};
+
+function rateLimit(key, maxRequests, windowMs) {
+  const now = Date.now();
+  if (!rateLimitStore[key]) {
+    rateLimitStore[key] = { count: 1, resetAt: now + windowMs };
+    return true;
+  }
+  const entry = rateLimitStore[key];
+  if (now > entry.resetAt) {
+    entry.count = 1;
+    entry.resetAt = now + windowMs;
+    return true;
+  }
+  if (entry.count >= maxRequests) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+// 定期清理过期的 rate limit 记录
+setInterval(() => {
+  const now = Date.now();
+  for (const key of Object.keys(rateLimitStore)) {
+    if (now > rateLimitStore[key].resetAt) {
+      delete rateLimitStore[key];
+    }
+  }
+}, 60000);
+
+// ============ 输入过滤 ============
+function sanitizeText(str, maxLen = 10000) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
+}
+
+function sanitizeUsername(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g, '').trim().slice(0, 20);
+}
 
 // JWT 密钥（部署时通过环境变量设置）
 const JWT_SECRET = process.env.JWT_SECRET || 'glory-secret-change-me-in-production';
@@ -110,14 +150,21 @@ function optionalAuth(req, res, next) {
 
 app.post('/api/register', async (req, res) => {
   try {
+    // Rate limit: 5次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`register:${ip}`, 5, 60000)) {
+      return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+    }
+
     const { email: rawEmail, username, password } = req.body;
     const userEmail = (rawEmail || '').trim().toLowerCase();
 
     if (!userEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
       return res.status(400).json({ error: '邮箱格式不正确' });
     }
-    if (!username || username.length < 2 || username.length > 20) {
-      return res.status(400).json({ error: '用户名需要2-20个字符' });
+    const cleanUsername = sanitizeUsername(username);
+    if (!cleanUsername || cleanUsername.length < 2) {
+      return res.status(400).json({ error: '用户名需要2-20个字符（仅支持中文、英文、数字、下划线）' });
     }
     if (!password || password.length < 6) {
       return res.status(400).json({ error: '密码至少6位' });
@@ -142,12 +189,12 @@ app.post('/api/register', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await db.createUser(userEmail, username, passwordHash);
+    const newUser = await db.createUser(userEmail, cleanUsername, passwordHash);
     await db.updateUser(userEmail, { emailVerified: true });
 
     // 创建默认用户资料
     await db.updateUserProfile(userEmail, {
-      username: username,
+      username: cleanUsername,
       joinDate: new Date().toISOString().slice(0, 10),
       exp: 0
     });
@@ -221,6 +268,12 @@ app.get('/api/verify', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
   try {
+    // Rate limit: 10次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`login:${ip}`, 10, 60000)) {
+      return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+    }
+
     const { email: rawEmail, password } = req.body;
     const userEmail = (rawEmail || '').trim().toLowerCase();
 
@@ -438,11 +491,19 @@ app.get('/api/forum/posts/:id', async (req, res) => {
 // 创建帖子
 app.post('/api/forum/posts', requireAuth, async (req, res) => {
   try {
+    // Rate limit: 10次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`post:${ip}`, 10, 60000)) {
+      return res.status(429).json({ error: '发帖过于频繁，请稍后再试' });
+    }
+
     const { title, content, category, tags } = req.body;
-    if (!title || !content || !category) {
+    const cleanTitle = sanitizeText(title, 100);
+    const cleanContent = sanitizeText(content, 50000);
+    if (!cleanTitle || !cleanContent || !category) {
       return res.status(400).json({ error: '标题、内容和版块不能为空' });
     }
-    if (title.length > 100) {
+    if (cleanTitle.length > 100) {
       return res.status(400).json({ error: '标题不能超过100字' });
     }
 
@@ -451,10 +512,10 @@ app.post('/api/forum/posts', requireAuth, async (req, res) => {
     const user = await db.getUserByEmail(req.user.email);
 
     const post = await db.createForumPost({
-      title,
-      content,
-      category,
-      tags: tags || [],
+      title: cleanTitle,
+      content: cleanContent,
+      category: sanitizeText(category, 50),
+      tags: (tags || []).map(t => sanitizeText(t, 20)).filter(Boolean),
       authorId: req.user.email,
       authorName: (profile && profile.username) || (user && user.username) || req.user.email,
       authorLevel: 1
@@ -506,6 +567,11 @@ app.delete('/api/forum/posts/:id', requireAuth, async (req, res) => {
 // 点赞/取消点赞帖子
 app.post('/api/forum/posts/:id/like', requireAuth, async (req, res) => {
   try {
+    // Rate limit: 30次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`like:${ip}`, 30, 60000)) {
+      return res.status(429).json({ error: '操作过于频繁，请稍后再试' });
+    }
     const post = await db.getForumPostById(req.params.id);
     if (!post) return res.status(404).json({ error: '帖子不存在' });
     const liked = await db.toggleForumLike('post', req.params.id, req.user.email);
@@ -531,8 +597,15 @@ app.get('/api/forum/posts/:id/replies', async (req, res) => {
 // 创建回复
 app.post('/api/forum/posts/:id/replies', requireAuth, async (req, res) => {
   try {
+    // Rate limit: 20次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`reply:${ip}`, 20, 60000)) {
+      return res.status(429).json({ error: '回复过于频繁，请稍后再试' });
+    }
+
     const { content, replyTo, mentionUser } = req.body;
-    if (!content) return res.status(400).json({ error: '回复内容不能为空' });
+    const cleanContent = sanitizeText(content, 10000);
+    if (!cleanContent) return res.status(400).json({ error: '回复内容不能为空' });
 
     const post = await db.getForumPostById(req.params.id);
     if (!post) return res.status(404).json({ error: '帖子不存在' });
@@ -543,9 +616,9 @@ app.post('/api/forum/posts/:id/replies', requireAuth, async (req, res) => {
 
     const reply = await db.createForumReply({
       postId: req.params.id,
-      content,
-      replyTo: replyTo || null,
-      mentionUser: mentionUser || null,
+      content: cleanContent,
+      replyTo: replyTo ? sanitizeText(replyTo, 100) : null,
+      mentionUser: mentionUser ? sanitizeText(mentionUser, 50) : null,
       authorId: req.user.email,
       authorName: (profile && profile.username) || (user && user.username) || req.user.email,
       authorLevel: 1
@@ -617,8 +690,16 @@ app.get('/api/ocs/:id', async (req, res) => {
 // 创建 OC
 app.post('/api/ocs', requireAuth, async (req, res) => {
   try {
+    // Rate limit: 10次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`oc:${ip}`, 10, 60000)) {
+      return res.status(429).json({ error: '创建过于频繁，请稍后再试' });
+    }
+
     const data = req.body;
-    if (!data.name || !data.gameId) {
+    const cleanName = sanitizeText(data.name, 30);
+    const cleanGameId = sanitizeText(data.gameId, 30);
+    if (!cleanName || !cleanGameId) {
       return res.status(400).json({ error: '角色名和游戏ID不能为空' });
     }
 
@@ -627,6 +708,15 @@ app.post('/api/ocs', requireAuth, async (req, res) => {
 
     const oc = await db.createOC({
       ...data,
+      name: cleanName,
+      gameId: cleanGameId,
+      avatar: data.avatar || '',
+      bio: sanitizeText(data.bio || '', 2000),
+      appearance: sanitizeText(data.appearance || '', 2000),
+      personality: sanitizeText(data.personality || '', 2000),
+      weapon: sanitizeText(data.weapon || '', 100),
+      weaponDesc: sanitizeText(data.weaponDesc || '', 500),
+      customSkill: sanitizeText(data.customSkill || '', 500),
       creatorId: req.user.email,
       creatorName: (profile && profile.username) || (user && user.username) || req.user.email
     });
@@ -749,11 +839,21 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   try {
     const { username, avatar, bio, favPlayer, favTeam } = req.body;
     const updates = {};
-    if (username !== undefined) updates.username = username;
-    if (avatar !== undefined) updates.avatar = avatar;
-    if (bio !== undefined) updates.bio = bio;
-    if (favPlayer !== undefined) updates.favPlayer = favPlayer;
-    if (favTeam !== undefined) updates.favTeam = favTeam;
+    if (username !== undefined) updates.username = sanitizeUsername(username);
+    if (avatar !== undefined) {
+      // 只允许 base64 图片或合法 URL
+      if (avatar && !avatar.startsWith('data:image/') && !avatar.startsWith('https://')) {
+        return res.status(400).json({ error: '头像格式不正确' });
+      }
+      // base64 图片限制 2MB
+      if (avatar && avatar.startsWith('data:image/') && avatar.length > 2 * 1024 * 1024 * 1.37) {
+        return res.status(400).json({ error: '头像图片过大，请压缩后重试（最大 2MB）' });
+      }
+      updates.avatar = avatar;
+    }
+    if (bio !== undefined) updates.bio = sanitizeText(bio, 200);
+    if (favPlayer !== undefined) updates.favPlayer = sanitizeText(favPlayer, 50);
+    if (favTeam !== undefined) updates.favTeam = sanitizeText(favTeam, 50);
 
     const profile = await db.updateUserProfile(req.user.email, updates);
 
@@ -838,10 +938,17 @@ app.put('/api/notifications/read-all', requireAuth, async (req, res) => {
 
 app.get('/api/search', async (req, res) => {
   try {
+    // Rate limit: 20次/分钟
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`search:${ip}`, 20, 60000)) {
+      return res.status(429).json({ error: '搜索过于频繁，请稍后再试' });
+    }
+
     const { q } = req.query;
     if (!q) return res.json({ posts: [], ocs: [], players: [] });
+    const cleanQuery = sanitizeText(q, 100);
 
-    const results = await db.searchAll(q);
+    const results = await db.searchAll(cleanQuery);
 
     // 选手数据是静态的，前端自行搜索
     res.json({

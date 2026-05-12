@@ -6,6 +6,10 @@
 <title>搜索 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<meta property="og:title" content="搜索 · 荣耀社区">
+<meta property="og:description" content="搜索荣耀社区的帖子、OC 角色和选手信息">
+<meta property="og:image" content="https://ya-chang.github.io/glory/favicon.png">
+<meta property="og:type" content="website">
 </head>
 <body>
 
@@ -171,7 +175,7 @@
               score,
               data: p,
               title: p.title,
-              subtitle: escapeForumHtml(p.authorName),
+              subtitle: userLinkHtml(p.authorId, p.authorName),
               meta: `${cat ? cat.icon + ' ' + cat.name : ''} · 💬${p.replyCount} 👍${p.likeCount}`,
               link: `post-detail.html?id=${p.id}`,
               excerpt: (p.content || '').slice(0, 120),

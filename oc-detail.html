@@ -6,6 +6,10 @@
 <title>OC 详情 · 荣耀社区</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
+<meta property="og:title" content="OC 详情 · 荣耀社区">
+<meta property="og:description" content="查看 OC 角色的详细设定和资料">
+<meta property="og:image" content="https://ya-chang.github.io/glory/favicon.png">
+<meta property="og:type" content="article">
 </head>
 <body>
 
@@ -133,7 +137,7 @@
 
     // 名字 & 副标题
     document.getElementById('detailName').textContent = oc.name;
-    document.getElementById('detailSub').textContent = `${oc.gameId} · 创建者：${oc.creatorName}`;
+    document.getElementById('detailSub').innerHTML = `${oc.gameId} · 创建者：<a href="user.html?email=${encodeURIComponent(oc.creatorId)}" class="user-link">${escapeForumHtml(oc.creatorName || '匿名')}</a>`;
 
     // 标签
     document.getElementById('detailTags').innerHTML = `

@@ -2,6 +2,24 @@
 
 const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
 
+// ===== 统一 Toast 错误提示 =====
+function showToast(msg, type) {
+  const existing = document.querySelector('.toast-msg');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg' + (type === 'error' ? ' toast-error' : type === 'success' ? ' toast-success' : '');
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+// 统一 API 错误处理
+function handleApiError(err, fallbackMsg) {
+  const msg = err.message || fallbackMsg || '操作失败';
+  showToast(msg, 'error');
+}
+
 // 版块列表（静态 + 从 API 获取）
 const FORUM_CATEGORIES = [
   { id: 'original', name: '原作讨论', icon: '📖', desc: '小说、动画、漫画、角色分析', color: '#1a73e8' },
@@ -223,6 +241,15 @@ function escapeForumHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// 生成用户名链接（指向用户主页）
+function userLinkHtml(authorId, authorName) {
+  const safeName = escapeForumHtml(authorName || '匿名');
+  if (authorId) {
+    return `<a href="user.html?email=${encodeURIComponent(authorId)}" class="user-link">${safeName}</a>`;
+  }
+  return safeName;
 }
 
 function formatPostContent(text) {
