@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>战队阵容 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html" class="active">战队阵容</a>
+      <a href="forum-home.html">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>战队阵容</h1>
+    <p>荣耀职业联盟各战队赛季阵容一览</p>
+  </div>
+</div>
+
+<!-- 赛季选择 -->
+<div class="season-bar">
+  <div class="season-inner">
+    <span class="season-label">赛季：</span>
+    <div class="season-tabs" id="seasonTabs"></div>
+  </div>
+</div>
+
+<!-- 战队列表 -->
+<div class="container">
+  <div id="teamsContainer"></div>
+</div>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="players.js"></script>
+<script src="teams.js"></script>
+<script>
+  // Build name→id lookup from players data
+  const playerIdMap = {};
+  PLAYERS.forEach(p => { playerIdMap[p.name] = p.id; });
+
+  let currentSeason = 9;
+
+  function renderSeasonTabs() {
+    const container = document.getElementById('seasonTabs');
+    for (let s = 1; s <= 10; s++) {
+      const tab = document.createElement('span');
+      tab.className = 'season-tab' + (s === currentSeason ? ' active' : '');
+      tab.textContent = 'S' + s;
+      tab.dataset.season = s;
+      tab.onclick = () => {
+        document.querySelectorAll('.season-tab').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        currentSeason = s;
+        renderTeams();
+      };
+      container.appendChild(tab);
+    }
+  }
+
+  function renderTeams() {
+    const container = document.getElementById('teamsContainer');
+    container.innerHTML = '';
+
+    TEAM_ORDER.forEach(teamId => {
+      const team = TEAM_ROSTERS[teamId];
+      if (!team) return;
+
+      const roster = team.seasons[currentSeason] || [];
+      const card = document.createElement('div');
+      card.className = 'team-card';
+
+      let rosterHtml = '';
+      if (roster.length === 0) {
+        rosterHtml = '<div class="team-empty">该赛季暂无阵容数据</div>';
+      } else {
+        rosterHtml = '<div class="team-roster">' + roster.map((p, i) => {
+          const noteHtml = p.note ? '<span class="player-note">' + p.note + '</span>' : '';
+          const pid = playerIdMap[p.name];
+          const nameHtml = pid
+            ? '<a class="roster-name roster-link" href="player-detail.html?id=' + pid + '">' + p.name + '</a>'
+            : '<span class="roster-name">' + p.name + '</span>';
+          return '<div class="roster-row">' +
+            '<span class="roster-num">' + (i + 1) + '</span>' +
+            nameHtml +
+            '<span class="roster-role">' + p.role + '</span>' +
+            noteHtml +
+            '</div>';
+        }).join('') + '</div>';
+      }
+
+      card.innerHTML =
+        '<div class="team-header">' +
+          '<h2>' + team.fullName + '</h2>' +
+          '<span class="team-count">' + roster.length + ' 人</span>' +
+        '</div>' +
+        rosterHtml;
+
+      container.appendChild(card);
+    });
+  }
+
+  renderSeasonTabs();
+  renderTeams();
+</script>
+
+</body>
+</html>

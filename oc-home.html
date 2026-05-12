@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OC 角色中心 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html">讨论区</a>
+      <a href="oc-home.html" class="active">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>OC 角色中心</h1>
+    <p>创建你的原创角色，在荣耀世界中留下你的印记</p>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="filter-search">
+      <input type="text" id="searchInput" placeholder="搜索角色名、游戏ID、创建者..." oninput="renderList()">
+    </div>
+    <select class="filter-select" id="classFilter" onchange="renderList()">
+      <option value="all">全部职业</option>
+    </select>
+  </div>
+</div>
+
+<div class="container">
+  <div id="draftBanner" style="display:none;background:var(--blue-5);border:1px solid var(--blue-4);border-radius:8px;padding:12px 20px;margin:16px 0;align-items:center;justify-content:space-between;">
+    <span style="font-size:14px;color:var(--blue-2);">你有一个未完成的 OC 草稿</span>
+    <div style="display:flex;gap:10px;">
+      <a href="oc-create.html" class="btn btn-primary" style="padding:6px 16px;font-size:13px;">继续编辑</a>
+      <button class="btn btn-secondary" style="padding:6px 16px;font-size:13px;" onclick="clearDraftBanner()">丢弃</button>
+    </div>
+  </div>
+  <div class="oc-grid" id="ocGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <p>还没有 OC 角色</p>
+    <a href="oc-create.html" class="btn btn-primary">创建第一个 OC</a>
+  </div>
+  <div id="loadingState" style="text-align:center;padding:40px 0;color:var(--text-3);">加载中...</div>
+  <div style="text-align:center;padding:20px 0 40px;">
+    <a href="oc-create.html" class="btn btn-primary" id="createBtn" style="display:none;">创建我的 OC</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="oc.js"></script>
+<script>
+  const classSelect = document.getElementById('classFilter');
+  OC_CLASSES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    classSelect.appendChild(opt);
+  });
+
+  function renderAvatar(oc) {
+    if (oc.avatar) {
+      return `<img src="${oc.avatar}" alt="${oc.name}">`;
+    }
+    return oc.gameId;
+  }
+
+  async function renderList() {
+    const search = document.getElementById('searchInput').value.trim();
+    const ocClass = document.getElementById('classFilter').value;
+    const grid = document.getElementById('ocGrid');
+    const empty = document.getElementById('emptyState');
+    const loading = document.getElementById('loadingState');
+    const createBtn = document.getElementById('createBtn');
+
+    grid.innerHTML = '';
+    loading.style.display = 'block';
+
+    try {
+      const result = await filterOCs({ search, ocClass });
+      const list = result.items || [];
+
+      loading.style.display = 'none';
+
+      if (list.length === 0) {
+        empty.style.display = 'block';
+        createBtn.style.display = 'none';
+        return;
+      }
+
+      empty.style.display = 'none';
+      createBtn.style.display = 'inline-block';
+
+      list.forEach(oc => {
+        const card = document.createElement('a');
+        card.className = 'oc-card';
+        card.href = `oc-detail.html?id=${oc.id}`;
+        card.innerHTML = `
+          <div class="oc-card-top"></div>
+          <div class="oc-card-body">
+            <div class="oc-avatar">${renderAvatar(oc)}</div>
+            <div class="oc-info">
+              <h3>${oc.name}</h3>
+              <div class="game-id">${oc.gameId}</div>
+              <div class="meta">
+                <span class="tag tag-class">${oc.class}</span>
+                <span class="tag tag-team">${oc.team}</span>
+              </div>
+              <div class="oc-creator">创建者：${oc.creatorName}</div>
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+    } catch (e) {
+      loading.style.display = 'none';
+      grid.innerHTML = '<p style="color:var(--text-3);padding:20px 0;text-align:center;">加载失败，请刷新重试</p>';
+    }
+  }
+
+  // 检查草稿
+  const DRAFT_KEY = 'glory_oc_draft';
+  try {
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      const d = JSON.parse(draft);
+      if (d.name || d.gameId) {
+        document.getElementById('draftBanner').style.display = 'flex';
+      }
+    }
+  } catch (e) {}
+
+  function clearDraftBanner() {
+    localStorage.removeItem(DRAFT_KEY);
+    document.getElementById('draftBanner').style.display = 'none';
+  }
+
+  renderList();
+</script>
+</body>
+</html>

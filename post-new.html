@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>发新帖 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html" class="active">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>发布新帖</h1>
+    <p>分享你的想法、创作或讨论</p>
+  </div>
+</div>
+
+<div class="container" style="max-width:760px;padding-top:24px;padding-bottom:48px;">
+  <div class="breadcrumb">
+    <a href="forum-home.html">讨论区</a>
+    <span class="sep">/</span>
+    <span>发新帖</span>
+  </div>
+
+  <div class="compose-card">
+    <h2>📝 发布新帖</h2>
+
+    <div class="form-group">
+      <label>选择版块 <span class="req">*</span></label>
+      <div class="category-select-grid" id="categoryGrid"></div>
+    </div>
+
+    <div class="form-group">
+      <label>标题 <span class="req">*</span></label>
+      <input type="text" id="f_title" placeholder="请输入帖子标题" maxlength="100" oninput="updateCharCount()">
+      <div class="char-count"><span id="titleCount">0</span>/100</div>
+    </div>
+
+    <div class="form-group">
+      <label>内容 <span class="req">*</span></label>
+      <div class="editor-toolbar">
+        <button class="toolbar-btn" onclick="insertFormat('**', '**')" title="加粗">𝐁</button>
+        <button class="toolbar-btn" onclick="insertFormat('*', '*')" title="斜体">𝐼</button>
+        <button class="toolbar-btn" onclick="insertFormat('\n> ', '')" title="引用">❝</button>
+        <button class="toolbar-btn" onclick="insertFormat('\n- ', '')" title="列表">☰</button>
+        <span class="toolbar-sep"></span>
+        <button class="toolbar-btn" onclick="insertFormat('[', '](url)')" title="链接">🔗</button>
+      </div>
+      <textarea id="f_content" placeholder="写下你想说的..." rows="12" oninput="updateCharCount()"></textarea>
+      <div class="char-count"><span id="contentCount">0</span> 字</div>
+    </div>
+
+    <div class="form-group">
+      <label>标签</label>
+      <div class="tag-input-wrap" id="tagInputWrap" onclick="document.getElementById('tagInput').focus()">
+        <input type="text" id="tagInput" placeholder="输入标签后按回车添加" maxlength="20">
+      </div>
+      <div class="hint">最多 5 个标签，按回车添加。建议添加角色名、CP、类型等标签方便搜索</div>
+      <div class="suggested-tags" id="suggestedTags">
+        <span class="suggested-label">常用：</span>
+        <button onclick="addSuggestedTag('叶修')">叶修</button>
+        <button onclick="addSuggestedTag('黄少天')">黄少天</button>
+        <button onclick="addSuggestedTag('周泽楷')">周泽楷</button>
+        <button onclick="addSuggestedTag('分析')">分析</button>
+        <button onclick="addSuggestedTag('同人')">同人</button>
+        <button onclick="addSuggestedTag('讨论')">讨论</button>
+        <button onclick="addSuggestedTag('求助')">求助</button>
+      </div>
+    </div>
+
+    <div class="preview-section" id="previewSection" style="display:none;">
+      <div class="preview-header">
+        <span>预览</span>
+        <button class="preview-close" onclick="closePreview()">✕</button>
+      </div>
+      <div class="preview-body">
+        <h3 id="previewTitle"></h3>
+        <div id="previewContent"></div>
+        <div id="previewTags"></div>
+      </div>
+    </div>
+
+    <div class="compose-tips">
+      <p>💡 <strong>发帖提示：</strong></p>
+      <ul>
+        <li>标题要简洁明了，方便其他人搜索</li>
+        <li>同人创作请在标签里注明 CP 和分级</li>
+        <li>保持友善，尊重不同观点</li>
+      </ul>
+    </div>
+
+    <div class="btn-row">
+      <div style="display:flex;gap:10px;">
+        <a href="forum-home.html" class="btn btn-secondary">取消</a>
+        <button class="btn btn-secondary" onclick="openPreview()">👁️ 预览</button>
+      </div>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitPost()">📤 发布帖子</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="forum.js"></script>
+<script>
+  // 检查登录状态
+  if (!getToken()) {
+    alert('请先登录后再发帖');
+    window.location.href = 'index.html';
+  }
+
+  let selectedCategory = '';
+
+  const categoryGrid = document.getElementById('categoryGrid');
+  FORUM_CATEGORIES.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'cat-select-card';
+    card.dataset.id = c.id;
+    card.innerHTML = `<span class="cat-select-icon">${c.icon}</span><span class="cat-select-name">${c.name}</span>`;
+    card.onclick = () => {
+      document.querySelectorAll('.cat-select-card').forEach(el => el.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedCategory = c.id;
+    };
+    categoryGrid.appendChild(card);
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const preCat = params.get('cat');
+  if (preCat) {
+    const target = document.querySelector(`.cat-select-card[data-id="${preCat}"]`);
+    if (target) { target.click(); }
+  }
+
+  const tags = [];
+  const tagInput = document.getElementById('tagInput');
+  const tagWrap = document.getElementById('tagInputWrap');
+
+  tagInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = this.value.trim();
+      if (!val) return;
+      if (tags.length >= 5) { alert('最多 5 个标签'); return; }
+      if (tags.includes(val)) { alert('标签已存在'); return; }
+      tags.push(val);
+      this.value = '';
+      renderTags();
+    }
+    if (e.key === 'Backspace' && !this.value && tags.length > 0) {
+      tags.pop();
+      renderTags();
+    }
+  });
+
+  function renderTags() {
+    tagWrap.querySelectorAll('.tag-chip').forEach(el => el.remove());
+    tags.forEach((tag, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.innerHTML = `${escapeForumHtml(tag)} <span class="remove-tag" onclick="removeTag(${i})">✕</span>`;
+      tagWrap.insertBefore(chip, tagInput);
+    });
+  }
+
+  function removeTag(index) {
+    tags.splice(index, 1);
+    renderTags();
+  }
+
+  function addSuggestedTag(tag) {
+    if (tags.length >= 5) { alert('最多 5 个标签'); return; }
+    if (tags.includes(tag)) return;
+    tags.push(tag);
+    renderTags();
+  }
+
+  function insertFormat(before, after) {
+    const textarea = document.getElementById('f_content');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    textarea.value = textarea.value.substring(0, start) + before + selected + after + textarea.value.substring(end);
+    textarea.focus();
+    textarea.selectionStart = start + before.length;
+    textarea.selectionEnd = start + before.length + selected.length;
+  }
+
+  function updateCharCount() {
+    document.getElementById('titleCount').textContent = document.getElementById('f_title').value.length;
+    document.getElementById('contentCount').textContent = document.getElementById('f_content').value.length;
+  }
+
+  function openPreview() {
+    const title = document.getElementById('f_title').value.trim();
+    const content = document.getElementById('f_content').value.trim();
+    if (!title && !content) { alert('请先填写标题和内容'); return; }
+
+    document.getElementById('previewTitle').textContent = title || '(无标题)';
+    document.getElementById('previewContent').innerHTML = formatPostContent(content || '(无内容)');
+    document.getElementById('previewTags').innerHTML = tags.length > 0
+      ? '<div class="post-tags" style="margin-top:12px;">' + tags.map(t => `<span class="post-tag">${escapeForumHtml(t)}</span>`).join('') + '</div>'
+      : '';
+    document.getElementById('previewSection').style.display = 'block';
+    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function closePreview() {
+    document.getElementById('previewSection').style.display = 'none';
+  }
+
+  async function submitPost() {
+    if (!selectedCategory) { alert('请选择版块'); return; }
+    const title = document.getElementById('f_title').value.trim();
+    const content = document.getElementById('f_content').value.trim();
+    if (!title) { alert('请输入标题'); return; }
+    if (!content) { alert('请输入内容'); return; }
+    if (title.length > 100) { alert('标题不能超过 100 字'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '发布中...';
+
+    try {
+      const post = await createPost({
+        title,
+        content,
+        category: selectedCategory,
+        tags: [...tags]
+      });
+      alert('帖子发布成功！');
+      window.location.href = `post-detail.html?id=${post.id}`;
+    } catch (e) {
+      alert('发布失败：' + e.message);
+      btn.disabled = false;
+      btn.textContent = '📤 发布帖子';
+    }
+  }
+</script>
+
+<style>
+  .category-select-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .cat-select-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--white);
+  }
+  .cat-select-card:hover {
+    border-color: var(--blue-4);
+    background: var(--blue-5);
+  }
+  .cat-select-card.selected {
+    border-color: var(--blue-3);
+    background: var(--blue-5);
+    box-shadow: 0 0 0 1px var(--blue-3);
+  }
+  .cat-select-icon { font-size: 24px; }
+  .cat-select-name { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  .editor-toolbar {
+    display: flex; gap: 4px; align-items: center;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .toolbar-btn {
+    width: 32px; height: 32px;
+    border: none; background: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--transition);
+  }
+  .toolbar-btn:hover {
+    background: var(--blue-5);
+    color: var(--blue-3);
+  }
+  .toolbar-sep {
+    width: 1px; height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .editor-toolbar + textarea {
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+  }
+
+  .char-count {
+    font-size: 12px; color: var(--text-3);
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  .suggested-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .suggested-label {
+    font-size: 12px; color: var(--text-3);
+  }
+  .suggested-tags button {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    border: 1px dashed var(--border);
+    background: var(--white);
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: inherit;
+  }
+  .suggested-tags button:hover {
+    border-color: var(--blue-4);
+    color: var(--blue-3);
+    background: var(--blue-5);
+    border-style: solid;
+  }
+
+  .preview-section {
+    border: 2px solid var(--blue-4);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    overflow: hidden;
+    animation: slideDown 0.3s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .preview-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px;
+    background: var(--blue-5);
+    font-size: 13px; font-weight: 600;
+    color: var(--blue-2);
+  }
+  .preview-close {
+    background: none; border: none;
+    cursor: pointer; font-size: 16px;
+    color: var(--text-3);
+  }
+  .preview-body {
+    padding: 20px;
+    background: var(--white);
+  }
+  .preview-body h3 {
+    font-size: 18px; margin-bottom: 12px;
+  }
+  .preview-body #previewContent {
+    font-size: 14px; line-height: 1.8;
+    color: var(--text-2);
+    white-space: pre-wrap;
+  }
+
+  .compose-tips {
+    background: var(--blue-5);
+    border: 1px solid var(--blue-4);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--blue-2);
+    line-height: 1.7;
+  }
+  .compose-tips ul {
+    margin: 6px 0 0 18px;
+  }
+  .compose-tips li {
+    margin-bottom: 2px;
+  }
+
+  @media (max-width: 768px) {
+    .category-select-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</body>
+</html>

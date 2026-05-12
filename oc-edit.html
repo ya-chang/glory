@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>编辑 OC · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html">讨论区</a>
+      <a href="oc-home.html" class="active">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>编辑 OC</h1>
+    <p id="editSubtitle"></p>
+  </div>
+</div>
+
+<div class="container" style="max-width:720px;padding-top:24px;padding-bottom:48px;">
+
+  <!-- 步骤指示器 -->
+  <div class="steps">
+    <div class="step active" id="step1"><span class="step-num">1</span> 基本信息</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2"><span class="step-num">2</span> 荣耀设定</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3"><span class="step-num">3</span> 背景故事</div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="form-card" id="form1">
+    <h2>基本信息</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>角色名 <span class="req">*</span></label>
+        <input type="text" id="f_name">
+      </div>
+      <div class="form-group">
+        <label>游戏ID <span class="req">*</span></label>
+        <input type="text" id="f_gameId">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>年龄 <span class="req">*</span></label>
+        <input type="number" id="f_age" min="1" max="99">
+      </div>
+      <div class="form-group">
+        <label>性别 <span class="req">*</span></label>
+        <div class="form-radio-group">
+          <label><input type="radio" name="gender" value="male"> 男</label>
+          <label><input type="radio" name="gender" value="female"> 女</label>
+          <label><input type="radio" name="gender" value="other"> 其他</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>身高</label>
+        <input type="text" id="f_height">
+      </div>
+      <div class="form-group">
+        <label>生日</label>
+        <input type="text" id="f_birthday">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>外貌描述</label>
+      <textarea id="f_appearance" rows="3"></textarea>
+      <div class="hint">可选</div>
+    </div>
+    <div class="form-group">
+      <label>性格描述</label>
+      <textarea id="f_personality" rows="3"></textarea>
+      <div class="hint">可选</div>
+    </div>
+    <div class="form-group">
+      <label>头像</label>
+      <div class="file-upload">
+        <input type="file" id="f_avatar" accept="image/*" onchange="previewFile(this, 'avatarPreview')">
+        <label for="f_avatar">选择图片</label>
+        <div class="file-preview" id="avatarPreview"><img></div>
+        <span style="font-size:12px;color:var(--text-3);">不上传则显示游戏ID</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>立绘</label>
+      <div class="file-upload">
+        <input type="file" id="f_illustration" accept="image/*" onchange="previewFile(this, 'illustPreview')">
+        <label for="f_illustration">选择图片</label>
+        <div class="file-preview" id="illustPreview"><img></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <a href="oc-home.html" class="btn btn-secondary">取消</a>
+      <button class="btn btn-primary" onclick="goStep(2)">下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="form-card" id="form2" style="display:none;">
+    <h2>荣耀设定</h2>
+    <div class="form-group">
+      <label>职业 <span class="req">*</span></label>
+      <select id="f_class"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>武器名称 <span class="req">*</span></label>
+        <input type="text" id="f_weapon">
+      </div>
+      <div class="form-group">
+        <label>武器类型 <span class="req">*</span></label>
+        <select id="f_weaponType">
+          <option value="银武">银武</option>
+          <option value="橙武">橙武</option>
+          <option value="紫武">紫武</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>武器描述 <span class="req">*</span></label>
+      <input type="text" id="f_weaponDesc">
+    </div>
+    <div class="form-group">
+      <label>战斗风格 <span class="req">*</span></label>
+      <select id="f_combatStyle"></select>
+    </div>
+    <div class="form-group">
+      <label>标志技能 <span class="req">*</span></label>
+      <div class="skill-inputs" id="skillInputs">
+        <input type="text" class="skill-input" placeholder="技能 1">
+        <input type="text" class="skill-input" placeholder="技能 2（可选）">
+        <input type="text" class="skill-input" placeholder="技能 3（可选）">
+      </div>
+      <div class="hint">至少填写 1 个</div>
+    </div>
+    <div class="form-group">
+      <label>自创技能</label>
+      <input type="text" id="f_customSkill">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>所属战队 <span class="req">*</span></label>
+        <select id="f_team"></select>
+      </div>
+      <div class="form-group">
+        <label>职位 <span class="req">*</span></label>
+        <select id="f_teamRole"></select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(1)">上一步</button>
+      <button class="btn btn-primary" onclick="goStep(3)">下一步</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="form-card" id="form3" style="display:none;">
+    <h2>背景故事</h2>
+    <div class="form-group">
+      <label>背景故事</label>
+      <textarea id="f_bio" rows="8"></textarea>
+      <div class="hint">可选</div>
+    </div>
+    <div class="form-group">
+      <label>人际关系</label>
+      <div class="relation-inputs" id="relationInputs"></div>
+      <button class="btn btn-secondary" style="margin-top:10px;font-size:13px;padding:6px 14px;" onclick="addRelation()">添加关系</button>
+      <div class="hint">最多 10 条</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="goStep(2)">上一步</button>
+      <button class="btn btn-primary" onclick="saveOC()">保存修改</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 404 -->
+<div id="notFound" style="display:none;">
+  <div class="page-header">
+    <div class="container" style="text-align:center;padding:40px 0;">
+      <h2>未找到该 OC</h2>
+      <a href="oc-home.html" style="color:rgba(255,255,255,0.7);margin-top:12px;display:inline-block;">← 返回 OC 列表</a>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="oc.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const ocId = params.get('id');
+  let oc = null;
+
+  async function init() {
+    oc = await getOCById(ocId);
+    if (!oc) {
+      document.querySelector('.container').style.display = 'none';
+      document.querySelector('.steps').style.display = 'none';
+      document.getElementById('notFound').style.display = 'block';
+      return;
+    }
+    document.getElementById('editSubtitle').textContent = `正在编辑：${oc.name}`;
+    initForm();
+  }
+  init();
+
+  function initForm() {
+    // 下拉选项
+    OC_CLASSES.forEach(c => {
+      const opt = new Option(c, c);
+      document.getElementById('f_class').appendChild(opt);
+    });
+    OC_TEAMS.forEach(t => {
+      const opt = new Option(t, t);
+      document.getElementById('f_team').appendChild(opt);
+    });
+    OC_ROLES.forEach(r => {
+      const opt = new Option(r, r);
+      document.getElementById('f_teamRole').appendChild(opt);
+    });
+    OC_COMBAT_STYLES.forEach(s => {
+      const opt = new Option(s, s);
+      document.getElementById('f_combatStyle').appendChild(opt);
+    });
+
+    // 填充数据
+    document.getElementById('f_name').value = oc.name;
+    document.getElementById('f_gameId').value = oc.gameId;
+    document.getElementById('f_age').value = oc.age;
+    document.querySelector(`input[name="gender"][value="${oc.gender}"]`).checked = true;
+    document.getElementById('f_height').value = oc.height || '';
+    document.getElementById('f_birthday').value = oc.birthday || '';
+    document.getElementById('f_appearance').value = oc.appearance;
+    document.getElementById('f_personality').value = oc.personality;
+
+    document.getElementById('f_class').value = oc.class;
+    document.getElementById('f_weapon').value = oc.weapon;
+    document.getElementById('f_weaponType').value = oc.weaponType;
+    document.getElementById('f_weaponDesc').value = oc.weaponDesc;
+    document.getElementById('f_combatStyle').value = oc.combatStyle;
+    document.getElementById('f_customSkill').value = oc.customSkill || '';
+    document.getElementById('f_team').value = oc.team;
+    document.getElementById('f_teamRole').value = oc.teamRole;
+
+    // 技能
+    const skillInputs = document.querySelectorAll('.skill-input');
+    oc.signatureSkills.forEach((s, i) => {
+      if (skillInputs[i]) skillInputs[i].value = s;
+    });
+
+    // 背景
+    document.getElementById('f_bio').value = oc.bio;
+
+    // 头像预览
+    if (oc.avatar) {
+      document.querySelector('#avatarPreview img').src = oc.avatar;
+      document.getElementById('avatarPreview').style.display = 'block';
+    }
+    if (oc.illustration) {
+      document.querySelector('#illustPreview img').src = oc.illustration;
+      document.getElementById('illustPreview').style.display = 'block';
+    }
+
+    // 人际关系
+    const container = document.getElementById('relationInputs');
+    container.innerHTML = '';
+    if (oc.relationships && oc.relationships.length > 0) {
+      oc.relationships.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'relation-row';
+        row.innerHTML = `
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" placeholder="角色名" value="${escapeAttr(r.name)}">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" placeholder="关系描述" value="${escapeAttr(r.desc)}">
+          </div>
+          <button class="btn-remove" onclick="this.parentElement.remove()">删除</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+  }
+
+  let currentStep = 1;
+
+  function goStep(n) {
+    if (n > currentStep && !validateStep(currentStep)) return;
+
+    document.getElementById('form' + currentStep).style.display = 'none';
+    document.getElementById('form' + n).style.display = 'block';
+
+    for (let i = 1; i <= 3; i++) {
+      const el = document.getElementById('step' + i);
+      el.className = 'step';
+      if (i < n) el.className = 'step done';
+      if (i === n) el.className = 'step active';
+    }
+    for (let i = 1; i <= 2; i++) {
+      document.getElementById('line' + i).className = i < n ? 'step-line done' : 'step-line';
+    }
+
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      if (!document.getElementById('f_name').value.trim()) { alert('请填写角色名'); return false; }
+      if (!document.getElementById('f_gameId').value.trim()) { alert('请填写游戏ID'); return false; }
+      if (!document.getElementById('f_age').value) { alert('请填写年龄'); return false; }
+      if (!document.querySelector('input[name="gender"]:checked')) { alert('请选择性别'); return false; }
+      return true;
+    }
+    if (step === 2) {
+      if (!document.getElementById('f_class').value) { alert('请选择职业'); return false; }
+      if (!document.getElementById('f_weapon').value.trim()) { alert('请填写武器名称'); return false; }
+      if (!document.getElementById('f_weaponDesc').value.trim()) { alert('请填写武器描述'); return false; }
+      if (!document.getElementById('f_combatStyle').value) { alert('请选择战斗风格'); return false; }
+      if (getSkills().length === 0) { alert('至少填写 1 个标志技能'); return false; }
+      if (!document.getElementById('f_team').value) { alert('请选择战队'); return false; }
+      if (!document.getElementById('f_teamRole').value) { alert('请选择职位'); return false; }
+      return true;
+    }
+    return true;
+  }
+
+  function getSkills() {
+    return Array.from(document.querySelectorAll('.skill-input'))
+      .map(i => i.value.trim()).filter(v => v);
+  }
+
+  function getRelations() {
+    const rows = document.querySelectorAll('#relationInputs .relation-row');
+    const rels = [];
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const name = inputs[0].value.trim();
+      const desc = inputs[1].value.trim();
+      if (name && desc) rels.push({ name, desc });
+    });
+    return rels;
+  }
+
+  function addRelation() {
+    const container = document.getElementById('relationInputs');
+    if (container.children.length >= 10) { alert('最多 10 条'); return; }
+    const row = document.createElement('div');
+    row.className = 'relation-row';
+    row.innerHTML = `
+      <div class="form-group" style="margin-bottom:0;">
+        <input type="text" placeholder="角色名">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <input type="text" placeholder="关系描述">
+      </div>
+      <button class="btn-remove" onclick="this.parentElement.remove()">删除</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const file = input.files[0];
+    if (!file) { preview.style.display = 'none'; return; }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.querySelector('img').src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function saveOC() {
+    if (!validateStep(2)) return;
+
+    const avatarPreview = document.querySelector('#avatarPreview img');
+    const illustPreview = document.querySelector('#illustPreview img');
+
+    const data = {
+      name: document.getElementById('f_name').value.trim(),
+      gameId: document.getElementById('f_gameId').value.trim(),
+      avatar: (avatarPreview && avatarPreview.src && document.getElementById('avatarPreview').style.display !== 'none') ? avatarPreview.src : oc.avatar,
+      illustration: (illustPreview && illustPreview.src && document.getElementById('illustPreview').style.display !== 'none') ? illustPreview.src : oc.illustration,
+      age: parseInt(document.getElementById('f_age').value),
+      gender: document.querySelector('input[name="gender"]:checked').value,
+      height: document.getElementById('f_height').value.trim(),
+      birthday: document.getElementById('f_birthday').value.trim(),
+      appearance: document.getElementById('f_appearance').value.trim(),
+      personality: document.getElementById('f_personality').value.trim(),
+
+      class: document.getElementById('f_class').value,
+      weapon: document.getElementById('f_weapon').value.trim(),
+      weaponType: document.getElementById('f_weaponType').value,
+      weaponDesc: document.getElementById('f_weaponDesc').value.trim(),
+      combatStyle: document.getElementById('f_combatStyle').value,
+      signatureSkills: getSkills(),
+      customSkill: document.getElementById('f_customSkill').value.trim(),
+      team: document.getElementById('f_team').value,
+      teamRole: document.getElementById('f_teamRole').value,
+
+      bio: document.getElementById('f_bio').value.trim(),
+      relationships: getRelations()
+    };
+
+    try {
+      await updateOC(ocId, data);
+      alert('修改已保存！');
+      window.location.href = `oc-detail.html?id=${ocId}`;
+    } catch (e) {
+      alert('保存失败：' + e.message);
+    }
+  }
+
+  function escapeAttr(str) {
+    return str.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+</script>
+</body>
+</html>

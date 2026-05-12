@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>讨论区 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html" class="active">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>💬 讨论区</h1>
+    <p>关于荣耀的一切都可以在这里聊</p>
+  </div>
+</div>
+
+<div class="container">
+  <!-- 统计卡片 -->
+  <div class="forum-stats-bar">
+    <div class="forum-stat-card">
+      <div class="forum-stat-icon">📝</div>
+      <div class="forum-stat-body">
+        <div class="forum-stat-num" id="totalPosts">-</div>
+        <div class="forum-stat-label">帖子</div>
+      </div>
+    </div>
+    <div class="forum-stat-card">
+      <div class="forum-stat-icon">💬</div>
+      <div class="forum-stat-body">
+        <div class="forum-stat-num" id="totalReplies">-</div>
+        <div class="forum-stat-label">回复</div>
+      </div>
+    </div>
+    <div class="forum-stat-card">
+      <div class="forum-stat-icon">🔥</div>
+      <div class="forum-stat-body">
+        <div class="forum-stat-num" id="todayPosts">-</div>
+        <div class="forum-stat-label">今日新帖</div>
+      </div>
+    </div>
+    <div class="forum-stat-card">
+      <div class="forum-stat-icon">👀</div>
+      <div class="forum-stat-body">
+        <div class="forum-stat-num" id="totalViews">-</div>
+        <div class="forum-stat-label">总浏览</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版块列表 -->
+  <div class="section-title"><span class="dot"></span> 版块</div>
+  <div class="forum-categories" id="categoriesGrid"></div>
+
+  <!-- 热门帖子 -->
+  <div class="forum-section">
+    <div class="section-title"><span class="dot"></span> 🔥 热门帖子</div>
+    <div id="hotPosts"><p style="color:var(--text-3);padding:20px 0;">加载中...</p></div>
+  </div>
+
+  <!-- 最近活跃帖子 -->
+  <div class="forum-section">
+    <div class="section-title"><span class="dot"></span> 最近活跃</div>
+    <div id="recentPosts"><p style="color:var(--text-3);padding:20px 0;">加载中...</p></div>
+  </div>
+</div>
+
+<a href="post-new.html" class="btn-new-post" title="发新帖">+</a>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="forum.js"></script>
+<script>
+  async function init() {
+    try {
+      // 并行加载数据
+      const [postsResult, statsResult] = await Promise.all([
+        apiGet('/api/forum/posts?pageSize=1000'),
+        apiGet('/api/community/stats').catch(() => null)
+      ]);
+
+      const allPosts = postsResult.items || [];
+
+      // 统计
+      document.getElementById('totalPosts').textContent = allPosts.length;
+      document.getElementById('totalReplies').textContent = allPosts.reduce((s, p) => s + (p.replyCount || 0), 0);
+
+      // 今日新帖
+      const today = new Date().toISOString().slice(0, 10);
+      const todayCount = allPosts.filter(p => p.createdAt && p.createdAt.slice(0, 10) === today).length;
+      document.getElementById('todayPosts').textContent = todayCount;
+
+      // 总浏览
+      const totalViews = allPosts.reduce((sum, p) => sum + (p.viewCount || 0), 0);
+      document.getElementById('totalViews').textContent = totalViews > 1000 ? (totalViews / 1000).toFixed(1) + 'k' : totalViews;
+
+      // 渲染版块卡片
+      const grid = document.getElementById('categoriesGrid');
+      FORUM_CATEGORIES.forEach(cat => {
+        const posts = allPosts.filter(p => p.category === cat.id);
+        const catReplies = posts.reduce((s, p) => s + (p.replyCount || 0), 0);
+        const lastPost = posts.sort((a, b) => new Date(b.lastReplyAt || b.createdAt) - new Date(a.lastReplyAt || a.createdAt))[0];
+
+        const card = document.createElement('a');
+        card.className = 'forum-cat-card';
+        card.href = `forum-category.html?cat=${cat.id}`;
+        card.innerHTML = `
+          <div class="cat-card-header">
+            <span class="cat-card-icon">${cat.icon}</span>
+            <h3>${cat.name}</h3>
+          </div>
+          <p>${cat.desc}</p>
+          <div class="cat-stats">
+            <span>📝 ${posts.length}</span>
+            <span>💬 ${catReplies}</span>
+          </div>
+          ${lastPost ? `<div class="cat-last-post">最新：${escapeForumHtml(lastPost.title.slice(0, 20))}${lastPost.title.length > 20 ? '...' : ''}</div>` : ''}
+        `;
+        grid.appendChild(card);
+      });
+
+      // 渲染热门帖子
+      const hotContainer = document.getElementById('hotPosts');
+      const hotPosts = [...allPosts]
+        .filter(p => !p.isPinned)
+        .sort((a, b) => (b.likeCount + b.replyCount * 2) - (a.likeCount + a.replyCount * 2))
+        .slice(0, 3);
+
+      if (hotPosts.length === 0) {
+        hotContainer.innerHTML = '<p style="color:var(--text-3);padding:20px 0;">暂无帖子</p>';
+      } else {
+        hotContainer.innerHTML = '';
+        hotPosts.forEach(post => {
+          const cat = getCategoryById(post.category);
+          const catName = cat ? cat.name : '未知';
+          const catIcon = cat ? cat.icon : '📁';
+          const item = document.createElement('a');
+          item.className = 'post-item hot-post';
+          item.href = `post-detail.html?id=${post.id}`;
+          item.innerHTML = `
+            <div class="post-avatar hot">${post.authorName[0]}</div>
+            <div class="post-body">
+              <div class="post-title">${escapeForumHtml(post.title)}</div>
+              <div class="post-excerpt">${escapeForumHtml(post.content.slice(0, 80))}${post.content.length > 80 ? '...' : ''}</div>
+              <div class="post-meta">
+                <span class="author">${escapeForumHtml(post.authorName)}</span>
+                <span class="user-badge${post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : ''}">Lv.${post.authorLevel}</span>
+                <span>${catIcon} ${catName}</span>
+                <span class="stat">💬 ${post.replyCount}</span>
+                <span class="stat highlight">👍 ${post.likeCount}</span>
+                <span>👁️ ${post.viewCount}</span>
+              </div>
+            </div>`;
+          hotContainer.appendChild(item);
+        });
+      }
+
+      // 渲染最近活跃帖子
+      const recentContainer = document.getElementById('recentPosts');
+      const recentPosts = [...allPosts]
+        .sort((a, b) => new Date(b.lastReplyAt || b.createdAt) - new Date(a.lastReplyAt || a.createdAt))
+        .slice(0, 8);
+
+      if (recentPosts.length === 0) {
+        recentContainer.innerHTML = '<p style="color:var(--text-3);padding:20px 0;">暂无帖子</p>';
+      } else {
+        recentContainer.innerHTML = '';
+        recentPosts.forEach(post => {
+          const cat = getCategoryById(post.category);
+          const catName = cat ? cat.name : '未知';
+          const catIcon = cat ? cat.icon : '📁';
+          const item = document.createElement('a');
+          item.className = 'post-item' + (post.isPinned ? ' pinned' : '');
+          item.href = `post-detail.html?id=${post.id}`;
+          item.innerHTML = `
+            <div class="post-avatar">${post.authorName[0]}</div>
+            <div class="post-body">
+              <div class="post-title">
+                ${post.isPinned ? '<span class="pin-icon">📌</span>' : ''}
+                ${escapeForumHtml(post.title)}
+              </div>
+              <div class="post-meta">
+                <span class="author">${escapeForumHtml(post.authorName)}</span>
+                <span class="user-badge${post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : ''}">Lv.${post.authorLevel}</span>
+                <span>${catIcon} ${catName}</span>
+                <span class="stat">💬 ${post.replyCount}</span>
+                <span class="stat">👍 ${post.likeCount}</span>
+                <span>${forumTimeAgo(post.lastReplyAt || post.createdAt)}</span>
+              </div>
+            </div>
+          `;
+          recentContainer.appendChild(item);
+        });
+      }
+    } catch (e) {
+      console.error('forum-home init error:', e);
+    }
+  }
+
+  init();
+</script>
+
+<style>
+  .forum-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 24px 0 8px;
+  }
+  .forum-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    display: flex; align-items: center; gap: 14px;
+    transition: all var(--transition);
+  }
+  .forum-stat-card:hover {
+    border-color: var(--blue-4);
+    box-shadow: var(--shadow);
+  }
+  .forum-stat-icon {
+    font-size: 28px;
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: var(--blue-5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .forum-stat-num {
+    font-size: 24px; font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .forum-stat-label {
+    font-size: 12px; color: var(--text-3);
+    margin-top: 2px;
+  }
+
+  .cat-card-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .cat-card-icon {
+    font-size: 28px;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: var(--blue-5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cat-last-post {
+    margin-top: 10px;
+    font-size: 12px; color: var(--text-3);
+    padding-top: 10px;
+    border-top: 1px solid #f0f0f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .forum-section {
+    margin-bottom: 16px;
+  }
+
+  .hot-post {
+    border-left: 3px solid #ff6d00;
+  }
+  .hot-post .post-avatar.hot {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    color: #e65100;
+    border-color: #ffcc80;
+  }
+  .post-meta .stat.highlight {
+    color: #e65100;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .forum-stats-bar {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 480px) {
+    .forum-stats-bar {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .forum-stat-card { padding: 14px 12px; }
+    .forum-stat-icon { font-size: 22px; width: 40px; height: 40px; }
+    .forum-stat-num { font-size: 20px; }
+  }
+</style>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html" class="active">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>荣耀社区</h1>
+  <p>全职高手同人社区 · 讨论、百科、创作，关于荣耀的一切</p>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-title"><span class="dot"></span> 社区板块</div>
+    <div class="boards-grid">
+      <a href="players.html" class="board-card">
+        <h3>选手百科</h3>
+        <p>收录荣耀职业联盟全部战队选手资料，支持赛季切换，查看每位选手的详细档案。</p>
+      </a>
+      <a href="teams.html" class="board-card">
+        <h3>战队阵容</h3>
+        <p>各战队S1-S10赛季阵容一览，支持赛季切换，追踪每支战队的人员变迁。</p>
+      </a>
+      <a href="forum-home.html" class="board-card">
+        <h3>讨论区</h3>
+        <p>原作讨论、同人创作、灌水闲聊，关于荣耀的一切都可以在这里聊。</p>
+      </a>
+      <a href="oc-home.html" class="board-card">
+        <h3>OC 角色中心</h3>
+        <p>创建你的原创角色，设定职业、武器、战斗风格，在荣耀世界中留下你的印记。</p>
+      </a>
+      <a href="forum-category.html?cat=meta" class="board-card">
+        <h3>站务中心</h3>
+        <p>社区公告、规则说明、建议反馈。联系邮箱：3117797385@qq.com</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-title"><span class="dot"></span> 社区数据</div>
+    <div class="boards-grid" style="grid-template-columns:repeat(3,1fr);" id="communityStats">
+      <div class="board-card" style="text-align:center;"><h3 id="statPosts">-</h3><p>帖子数</p></div>
+      <div class="board-card" style="text-align:center;"><h3 id="statUsers">-</h3><p>注册用户</p></div>
+      <div class="board-card" style="text-align:center;"><h3 id="statOCs">-</h3><p>OC 角色</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-title"><span class="dot"></span> 热门帖子</div>
+    <div id="hotPosts" style="display:flex;flex-direction:column;gap:12px;"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="forum-home.html" style="font-size:14px;font-weight:500;color:var(--blue-3);">进入讨论区 →</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="background:var(--white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-title"><span class="dot"></span> 热门选手</div>
+    <div class="players-grid" id="hotPlayers"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="players.html" style="font-size:14px;font-weight:500;color:var(--blue-3);">查看全部选手 →</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="players.js"></script>
+<script src="forum.js"></script>
+<script>
+  // 热门选手（静态数据）
+  const hotIds = ['yexiu','huangshaotian','zhouzekai','wangjiexi','hanwenqing','yuwenzhou'];
+  const hotPlayers = PLAYERS.filter(p => hotIds.includes(p.id));
+  const grid = document.getElementById('hotPlayers');
+  hotPlayers.forEach(p => {
+    const card = document.createElement('a');
+    card.className = 'player-card';
+    card.href = `player-detail.html?id=${p.id}`;
+    card.innerHTML = `
+      <div class="player-card-top"></div>
+      <div class="player-card-body">
+        <div class="player-avatar">${p.avatar}</div>
+        <div class="player-info">
+          <h3>${p.name}</h3>
+          <div class="game-id">${p.gameId.split('/')[0].trim()}</div>
+          <div class="meta">
+            <span class="tag tag-class">${p.class.split('/')[0].split('（')[0]}</span>
+            <span class="tag tag-team">${p.team.split('→').pop()}</span>
+          </div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // 社区数据（API）
+  async function loadCommunityData() {
+    try {
+      const [stats, hotPosts] = await Promise.all([
+        apiGet('/api/community/stats'),
+        apiGet('/api/community/hot-posts')
+      ]);
+      if (stats) {
+        document.getElementById('statPosts').textContent = stats.postCount || 0;
+        document.getElementById('statUsers').textContent = stats.userCount || 0;
+        document.getElementById('statOCs').textContent = stats.ocCount || 0;
+      }
+      if (hotPosts && hotPosts.length > 0) {
+        const container = document.getElementById('hotPosts');
+        hotPosts.forEach(p => {
+          const cat = getCategoryById(p.category);
+          const div = document.createElement('a');
+          div.href = `post-detail.html?id=${p.id}`;
+          div.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-subtle,#f8f9fa);border:1px solid var(--border,#e8e8e8);border-radius:6px;text-decoration:none;color:inherit;';
+          div.innerHTML = `
+            <span style="font-size:20px;">${cat ? cat.icon : '💬'}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeForumHtml(p.title)}</div>
+              <div style="font-size:12px;color:#888;margin-top:2px;">${p.authorName} · ${forumTimeAgo(p.createdAt)} · ❤️ ${p.likeCount || 0} · 💬 ${p.replyCount || 0}</div>
+            </div>`;
+          container.appendChild(div);
+        });
+      }
+    } catch (e) {
+      console.error('loadCommunityData error:', e);
+    }
+  }
+  loadCommunityData();
+</script>
+</body>
+</html>

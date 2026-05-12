@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>版块 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html" class="active">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header" id="pageHeader">
+  <div class="container">
+    <h1 id="catTitle"></h1>
+    <p id="catDesc"></p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="breadcrumb" style="padding-top:16px;">
+    <a href="forum-home.html">讨论区</a>
+    <span class="sep">/</span>
+    <span id="breadcrumbCurrent"></span>
+  </div>
+
+  <div class="sort-bar">
+    <div class="sort-tabs">
+      <button class="sort-tab active" data-sort="latest">🕐 最新</button>
+      <button class="sort-tab" data-sort="hot">🔥 最热</button>
+      <button class="sort-tab" data-sort="top">👍 最多赞</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="tag-filter-wrap" id="tagFilterWrap" style="display:none;">
+        <span class="tag-filter-label">标签筛选：</span>
+        <span class="tag-filter-tag" id="activeTagFilter"></span>
+        <button class="tag-filter-clear" onclick="clearTagFilter()">✕</button>
+      </div>
+      <div style="font-size:13px;color:var(--text-3);" id="postCount"></div>
+    </div>
+  </div>
+
+  <div class="available-tags" id="availableTags"></div>
+
+  <div class="post-list" id="postList"></div>
+
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div style="font-size:48px;margin-bottom:16px;">📭</div>
+    <p>这个版块还没有帖子</p>
+    <a href="post-new.html" class="btn btn-primary">发第一帖</a>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<a href="post-new.html" class="btn-new-post" title="发新帖">+</a>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="forum.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const catId = params.get('cat');
+  const cat = getCategoryById(catId);
+
+  if (!cat) {
+    document.getElementById('pageHeader').innerHTML = `
+      <div class="container" style="text-align:center;padding:40px 0;">
+        <h2 style="color:var(--white);">未找到该版块</h2>
+        <a href="forum-home.html" style="color:rgba(255,255,255,0.7);margin-top:12px;display:inline-block;">← 返回讨论区</a>
+      </div>`;
+    document.querySelector('.container').style.display = 'none';
+  } else {
+    document.title = `${cat.name} · 讨论区 · 荣耀社区`;
+    document.getElementById('catTitle').textContent = cat.icon + ' ' + cat.name;
+    document.getElementById('catDesc').textContent = cat.desc;
+    document.getElementById('breadcrumbCurrent').textContent = cat.name;
+
+    const newPostId = params.get('new');
+    if (newPostId) {
+      const banner = document.createElement('div');
+      banner.className = 'success-banner';
+      banner.innerHTML = '<span>✅ 帖子发布成功！</span><button onclick="this.parentElement.remove()" style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-3);">✕</button>';
+      document.querySelector('.container').insertBefore(banner, document.querySelector('.breadcrumb'));
+    }
+
+    let currentSort = 'latest';
+    let currentPage = 1;
+    let currentTag = null;
+    let allCategoryPosts = [];
+
+    // 加载标签
+    async function loadTags() {
+      try {
+        const result = await apiGet(`/api/forum/posts?category=${catId}&pageSize=1000`);
+        allCategoryPosts = result.items || [];
+        const allTags = [...new Set(allCategoryPosts.flatMap(p => p.tags || []))];
+        const tagsContainer = document.getElementById('availableTags');
+        if (allTags.length > 0) {
+          tagsContainer.innerHTML = allTags.map(t =>
+            `<button class="tag-filter-btn" onclick="filterByTag('${escapeForumHtml(t)}')">${escapeForumHtml(t)}</button>`
+          ).join('');
+        }
+      } catch (e) {}
+    }
+
+    function filterByTag(tag) {
+      currentTag = tag;
+      currentPage = 1;
+      document.getElementById('tagFilterWrap').style.display = 'flex';
+      document.getElementById('activeTagFilter').textContent = tag;
+      document.querySelectorAll('.tag-filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === tag);
+      });
+      render();
+    }
+
+    function clearTagFilter() {
+      currentTag = null;
+      currentPage = 1;
+      document.getElementById('tagFilterWrap').style.display = 'none';
+      document.querySelectorAll('.tag-filter-btn').forEach(btn => btn.classList.remove('active'));
+      render();
+    }
+
+    async function render() {
+      const list = document.getElementById('postList');
+      const empty = document.getElementById('emptyState');
+      const countEl = document.getElementById('postCount');
+
+      list.innerHTML = '<p style="color:var(--text-3);padding:20px 0;">加载中...</p>';
+
+      try {
+        let result = await getPostsByCategory(catId, { sort: currentSort, page: currentPage });
+
+        if (currentTag) {
+          result.items = result.items.filter(p => p.tags && p.tags.includes(currentTag));
+          result.total = result.items.length;
+          result.totalPages = 1;
+        }
+
+        list.innerHTML = '';
+        countEl.textContent = `共 ${result.total} 帖`;
+
+        if (result.items.length === 0) {
+          empty.style.display = 'block';
+          document.getElementById('pagination').innerHTML = '';
+          return;
+        }
+        empty.style.display = 'none';
+
+        result.items.forEach(post => {
+          const item = document.createElement('a');
+          item.className = 'post-item' + (post.isPinned ? ' pinned' : '') + (post.isLocked ? ' locked' : '');
+          item.href = `post-detail.html?id=${post.id}`;
+
+          let tagsHtml = '';
+          if (post.tags && post.tags.length > 0) {
+            tagsHtml = '<div class="post-tags">' + post.tags.map(t =>
+              `<span class="post-tag${currentTag === t ? ' active' : ''}" onclick="event.stopPropagation();filterByTag('${escapeForumHtml(t)}')">${escapeForumHtml(t)}</span>`
+            ).join('') + '</div>';
+          }
+
+          const excerpt = post.content.length > 120 ? post.content.substring(0, 120) + '...' : post.content;
+          const isHot = (post.likeCount + post.replyCount) > 20;
+
+          item.innerHTML = `
+            <div class="post-avatar${isHot ? ' hot' : ''}">${post.authorName[0]}</div>
+            <div class="post-body">
+              <div class="post-title">
+                ${post.isPinned ? '<span class="pin-icon">📌</span>' : ''}
+                ${post.isLocked ? '<span class="lock-icon">🔒</span>' : ''}
+                ${isHot ? '<span class="hot-icon">🔥</span>' : ''}
+                ${escapeForumHtml(post.title)}
+              </div>
+              ${tagsHtml}
+              <div class="post-excerpt">${escapeForumHtml(excerpt)}</div>
+              <div class="post-meta">
+                <span class="author">${escapeForumHtml(post.authorName)}</span>
+                <span class="user-badge${post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : ''}">Lv.${post.authorLevel}</span>
+                <span class="stat">💬 ${post.replyCount}</span>
+                <span class="stat">👍 ${post.likeCount}</span>
+                <span class="stat">👁️ ${post.viewCount}</span>
+                <span>${forumTimeAgo(post.lastReplyAt || post.createdAt)}</span>
+              </div>
+            </div>
+          `;
+          list.appendChild(item);
+        });
+
+        renderPagination(result);
+      } catch (e) {
+        list.innerHTML = '<p style="color:var(--text-3);padding:20px 0;">加载失败，请刷新重试</p>';
+      }
+    }
+
+    function renderPagination(result) {
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+      if (result.totalPages <= 1) return;
+
+      const prev = document.createElement('a');
+      prev.className = 'page-btn' + (currentPage <= 1 ? ' disabled' : '');
+      prev.textContent = '← 上一页';
+      prev.href = '#';
+      prev.onclick = (e) => { e.preventDefault(); if (currentPage > 1) { currentPage--; render(); window.scrollTo({top:0}); } };
+      container.appendChild(prev);
+
+      for (let i = 1; i <= result.totalPages; i++) {
+        const btn = document.createElement('a');
+        btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+        btn.textContent = i;
+        btn.href = '#';
+        btn.onclick = (e) => { e.preventDefault(); currentPage = i; render(); window.scrollTo({top:0}); };
+        container.appendChild(btn);
+      }
+
+      const next = document.createElement('a');
+      next.className = 'page-btn' + (currentPage >= result.totalPages ? ' disabled' : '');
+      next.textContent = '下一页 →';
+      next.href = '#';
+      next.onclick = (e) => { e.preventDefault(); if (currentPage < result.totalPages) { currentPage++; render(); window.scrollTo({top:0}); } };
+      container.appendChild(next);
+    }
+
+    document.querySelectorAll('.sort-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentSort = tab.dataset.sort;
+        currentPage = 1;
+        render();
+      };
+    });
+
+    loadTags();
+    render();
+  }
+</script>
+
+<style>
+  .success-banner {
+    background: var(--green-5);
+    border: 1px solid var(--green-4);
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: var(--green-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideDown 0.3s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .available-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 8px 0 12px;
+  }
+  .tag-filter-btn {
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text-3);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: inherit;
+  }
+  .tag-filter-btn:hover {
+    border-color: var(--blue-4);
+    color: var(--blue-3);
+    background: var(--blue-5);
+  }
+  .tag-filter-btn.active {
+    background: var(--blue-3);
+    color: var(--white);
+    border-color: var(--blue-3);
+  }
+
+  .tag-filter-wrap {
+    display: flex; align-items: center; gap: 8px;
+    padding: 4px 12px;
+    background: var(--blue-5);
+    border-radius: 16px;
+    font-size: 12px;
+  }
+  .tag-filter-label { color: var(--text-3); }
+  .tag-filter-tag {
+    color: var(--blue-3);
+    font-weight: 600;
+  }
+  .tag-filter-clear {
+    background: none; border: none;
+    color: var(--text-3); cursor: pointer;
+    font-size: 14px; line-height: 1;
+    padding: 2px;
+    transition: color var(--transition);
+  }
+  .tag-filter-clear:hover { color: #e53935; }
+
+  .post-item.locked { opacity: 0.7; }
+  .lock-icon { font-size: 12px; }
+  .hot-icon { font-size: 12px; }
+  .post-tag.active {
+    background: var(--blue-3) !important;
+    color: var(--white) !important;
+  }
+  .post-tag { cursor: pointer; }
+  .post-tag:hover { background: var(--blue-4); color: var(--white); }
+</style>
+</body>
+</html>

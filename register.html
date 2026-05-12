@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>荣耀 · 注册</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold-mid: #c8a030;
+    --red-bright: #c0392b;
+    --bg-dark: #0a0608;
+    --bg-card: rgba(18, 8, 8, 0.85);
+    --green-ok: #34a853;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: 'Noto Serif SC', serif;
+    background: var(--bg-dark);
+  }
+
+  .bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(100, 20, 15, 0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 100% at 50% 50%, #0a0608 0%, #050204 100%);
+  }
+  .bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(40, 5, 5, 0.3) 70%, rgba(5, 2, 2, 0.9) 100%);
+  }
+
+  .embers {
+    position: fixed; inset: 0; z-index: 1;
+    pointer-events: none; overflow: hidden;
+  }
+  .ember {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,120,40,0.9), rgba(200,60,20,0.4) 60%, transparent 100%);
+    animation: rise linear infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    80%  { opacity: 0.3; }
+    100% { transform: translateY(-100vh) translateX(var(--drift)) scale(0.2); opacity: 0; }
+  }
+
+  .noise {
+    position: fixed; inset: 0; z-index: 2;
+    pointer-events: none; opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+  }
+
+  .scanlines {
+    position: fixed; inset: 0; z-index: 2;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px);
+  }
+
+  .scene {
+    position: relative; z-index: 10;
+    width: 100%; min-height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 20px;
+  }
+
+  .register-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 460px;
+    width: 100%;
+    animation: fadeIn 1.5s ease-out;
+  }
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .emblem-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    margin-bottom: 6px;
+  }
+  .emblem-glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120%; height: 120%;
+    background: radial-gradient(ellipse, rgba(180, 50, 30, 0.2) 0%, rgba(200, 140, 40, 0.08) 40%, transparent 70%);
+    filter: blur(40px);
+    animation: emblemPulse 5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes emblemPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .emblem-img {
+    position: relative;
+    width: 100%;
+    display: block;
+    filter: drop-shadow(0 0 30px rgba(180, 60, 30, 0.3)) drop-shadow(0 8px 20px rgba(0,0,0,0.6));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .divider {
+    width: 300px; height: 1px;
+    margin: 24px 0 28px;
+    background: linear-gradient(90deg, transparent 0%, rgba(140,80,30,0.2) 15%, rgba(200,130,40,0.5) 50%, rgba(140,80,30,0.2) 85%, transparent 100%);
+  }
+
+  .register-card {
+    position: relative;
+    width: 100%;
+    padding: 32px 36px 30px;
+    background: var(--bg-card);
+    border: 1px solid rgba(140, 80, 30, 0.12);
+    border-radius: 6px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+  .register-card::after {
+    content: '';
+    position: absolute; top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red-bright), var(--gold-mid), var(--red-bright), transparent);
+    opacity: 0.5;
+  }
+
+  .card-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: rgba(220, 180, 100, 0.7);
+    margin-bottom: 24px;
+  }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 28px;
+  }
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(140, 80, 30, 0.25);
+    background: rgba(10, 5, 5, 0.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    color: rgba(200, 160, 80, 0.3);
+    transition: all 0.4s;
+    position: relative;
+    z-index: 1;
+  }
+  .step-dot.active {
+    border-color: rgba(200, 80, 40, 0.55);
+    background: rgba(200, 60, 30, 0.15);
+    color: #f0d888;
+    box-shadow: 0 0 18px rgba(180, 50, 30, 0.15);
+  }
+  .step-dot.done {
+    border-color: rgba(52, 168, 83, 0.5);
+    background: rgba(52, 168, 83, 0.12);
+    color: var(--green-ok);
+  }
+  .step-line {
+    width: 80px; height: 1px;
+    background: rgba(140, 80, 30, 0.2);
+    transition: background 0.4s;
+  }
+  .step-line.active {
+    background: linear-gradient(90deg, rgba(200, 80, 40, 0.5), rgba(200, 80, 40, 0.5));
+  }
+
+  .step-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 0 4px;
+  }
+  .step-label {
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: rgba(200, 160, 80, 0.25);
+    transition: color 0.4s;
+    flex: 1;
+    text-align: center;
+  }
+  .step-label.active { color: rgba(220, 180, 100, 0.6); }
+
+  /* Form */
+  .form { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; }
+
+  .field { position: relative; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(220, 180, 100, 0.6);
+    margin-bottom: 7px;
+  }
+  .field label .required {
+    color: var(--red-bright);
+    margin-left: 2px;
+    font-size: 14px;
+  }
+  .field input {
+    width: 100%; height: 46px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #f0d888;
+    background: rgba(10, 5, 5, 0.7);
+    border: 1px solid rgba(140, 80, 30, 0.2);
+    border-radius: 4px;
+    outline: none;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+  }
+  .field input::placeholder {
+    color: rgba(200, 160, 90, 0.3);
+    font-size: 13px;
+  }
+  .field input:focus {
+    border-color: rgba(200, 100, 40, 0.45);
+    background: rgba(15, 8, 8, 0.85);
+    box-shadow:
+      0 0 20px rgba(180, 50, 30, 0.06),
+      inset 0 0 15px rgba(200, 80, 30, 0.03);
+  }
+  .field::after {
+    content: '';
+    position: absolute; bottom: 0; left: 50%;
+    width: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red-bright), transparent);
+    transition: all 0.4s;
+    transform: translateX(-50%);
+  }
+  .field:focus-within::after { width: 100%; }
+
+  .field-hint {
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 5px;
+    min-height: 16px;
+    transition: all 0.3s;
+  }
+  .field-hint.error { color: var(--red-bright); opacity: 0.8; }
+  .field-hint.success { color: var(--green-ok); opacity: 0.8; }
+  .field-hint.info { color: rgba(200, 160, 80, 0.4); }
+
+  /* Password strength */
+  .pwd-strength {
+    display: flex; gap: 6px; margin-top: 6px;
+  }
+  .pwd-bar {
+    flex: 1; height: 3px;
+    border-radius: 2px;
+    background: rgba(140, 80, 30, 0.15);
+    transition: background 0.3s;
+  }
+  .pwd-bar.s1 { background: var(--red-bright); }
+  .pwd-bar.s2 { background: #e67e22; }
+  .pwd-bar.s3 { background: var(--gold-mid); }
+  .pwd-bar.s4 { background: var(--green-ok); }
+  .pwd-label {
+    font-size: 10px; letter-spacing: 1px;
+    color: rgba(200, 160, 80, 0.3);
+    margin-top: 4px;
+  }
+
+  /* Step panels */
+  .step-panel { display: none; }
+  .step-panel.active { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Buttons */
+  .btn-row {
+    display: flex; gap: 12px; margin-top: 6px;
+  }
+  .btn-back {
+    flex: 1; height: 50px;
+    font-family: inherit;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 6px;
+    color: rgba(200, 160, 80, 0.5);
+    background: rgba(10, 5, 5, 0.5);
+    border: 1px solid rgba(140, 80, 30, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .btn-back:hover {
+    border-color: rgba(200, 100, 40, 0.35);
+    color: rgba(200, 160, 80, 0.7);
+    background: rgba(15, 8, 8, 0.6);
+  }
+  .btn-register {
+    position: relative;
+    flex: 2; height: 50px;
+    font-family: inherit;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: 10px;
+    color: #1a0800;
+    background: linear-gradient(180deg, #d44020 0%, #a02818 50%, #7a1a10 100%);
+    border: 1px solid rgba(200, 80, 40, 0.35);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s;
+    text-shadow: 0 1px 2px rgba(255, 120, 60, 0.3);
+  }
+  .btn-register::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    transition: left 0.6s;
+  }
+  .btn-register:hover {
+    box-shadow: 0 0 30px rgba(200, 60, 30, 0.25), 0 0 60px rgba(200, 60, 30, 0.08);
+    transform: translateY(-1px);
+  }
+  .btn-register:hover::before { left: 100%; }
+  .btn-register:active { transform: translateY(0); }
+  .btn-register:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .btn-register:disabled::before { display: none; }
+
+  /* Success panel */
+  .success-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
+  }
+  .success-panel.active { display: flex; }
+  .success-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid rgba(52, 168, 83, 0.4);
+    background: rgba(52, 168, 83, 0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    animation: popIn 0.5s ease-out 0.2s both;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .success-title {
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 6px;
+    color: rgba(220, 180, 100, 0.8);
+  }
+  .success-desc {
+    font-size: 13px;
+    color: rgba(200, 160, 80, 0.4);
+    letter-spacing: 1px;
+    line-height: 1.8;
+  }
+  .success-desc .email-highlight {
+    color: rgba(220, 180, 100, 0.7);
+  }
+  .btn-login-redirect {
+    margin-top: 8px;
+    width: 200px; height: 46px;
+    font-family: inherit;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 8px;
+    color: #1a0800;
+    background: linear-gradient(180deg, #d44020 0%, #a02818 50%, #7a1a10 100%);
+    border: 1px solid rgba(200, 80, 40, 0.35);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-shadow: 0 1px 2px rgba(255, 120, 60, 0.3);
+  }
+  .btn-login-redirect:hover {
+    box-shadow: 0 0 30px rgba(200, 60, 30, 0.25);
+    transform: translateY(-1px);
+  }
+
+  /* Resend link */
+  .resend-area {
+    text-align: center;
+    margin-top: 4px;
+  }
+  .resend-link {
+    font-size: 12px;
+    color: rgba(200, 160, 80, 0.3);
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color 0.3s;
+    text-decoration: none;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+  .resend-link:hover { color: rgba(200, 160, 80, 0.6); }
+  .resend-link:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Bottom */
+  .bottom {
+    margin-top: 28px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .links {
+    display: flex; gap: 28px;
+  }
+  .links a {
+    font-size: 11px; color: rgba(200, 160, 80, 0.25);
+    text-decoration: none; letter-spacing: 1px;
+    cursor: pointer; transition: color 0.3s;
+  }
+  .links a:hover { color: rgba(200, 160, 80, 0.55); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 30px; left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    padding: 12px 28px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border-radius: 4px;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.4s ease;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.error {
+    background: rgba(180, 40, 30, 0.9);
+    border: 1px solid rgba(200, 60, 40, 0.5);
+    color: #f0d888;
+  }
+  .toast.success {
+    background: rgba(40, 120, 60, 0.9);
+    border: 1px solid rgba(52, 168, 83, 0.5);
+    color: #d8f0d8;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(26, 8, 0, 0.3);
+    border-top-color: #1a0800;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    .scene { padding: 16px; }
+    .emblem-wrap { max-width: 300px; }
+    .divider { width: 200px; margin: 18px 0 22px; }
+    .register-card { padding: 24px 20px 22px; }
+    .btn-register, .btn-back { height: 46px; font-size: 14px; letter-spacing: 6px; }
+    .links { gap: 18px; }
+    .step-line { width: 50px; }
+  }
+
+  @media (max-height: 680px) {
+    .emblem-wrap { max-width: 280px; }
+    .divider { margin: 14px 0 18px; }
+    .register-card { padding: 20px 20px 18px; }
+    .form { gap: 12px; }
+    .bottom { margin-top: 18px; }
+  }
+
+  @media (min-width: 1200px) {
+    .register-wrapper { max-width: 500px; }
+    .emblem-wrap {
+      width: 660px;
+      max-width: none;
+      margin-bottom: 30px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="embers" id="embers"></div>
+<div class="noise"></div>
+<div class="scanlines"></div>
+
+<div class="toast" id="toast"></div>
+
+<div class="scene">
+  <div class="register-wrapper">
+
+    <div class="emblem-wrap">
+      <div class="emblem-glow"></div>
+      <img class="emblem-img" src="主徽章.png" alt="荣耀 Glory" draggable="false">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="register-card">
+      <div class="card-title">账号注册</div>
+
+      <!-- Step indicator -->
+      <div class="steps">
+        <div class="step-dot active" id="dot1">1</div>
+        <div class="step-line" id="line1"></div>
+        <div class="step-dot" id="dot2">2</div>
+      </div>
+      <div class="step-labels">
+        <span class="step-label active" id="label1">填写信息</span>
+        <span class="step-label" id="label2">验证邮箱</span>
+      </div>
+
+      <!-- Step 1: Fill in info -->
+      <div class="step-panel active" id="step1">
+        <div class="form">
+          <div class="field">
+            <label>用户名 <span class="required">*</span></label>
+            <input type="text" id="reg-username" placeholder="2-20个字符" autocomplete="off" spellcheck="false" maxlength="20">
+            <div class="field-hint" id="hint-username"></div>
+          </div>
+          <div class="field">
+            <label>邮箱 <span class="required">*</span></label>
+            <input type="email" id="reg-email" placeholder="用于登录和找回密码" autocomplete="off" spellcheck="false">
+            <div class="field-hint" id="hint-email"></div>
+          </div>
+          <div class="field">
+            <label>密码 <span class="required">*</span></label>
+            <input type="password" id="reg-pwd" placeholder="至少6位" autocomplete="new-password">
+            <div class="pwd-strength" id="pwd-strength">
+              <div class="pwd-bar" id="bar1"></div>
+              <div class="pwd-bar" id="bar2"></div>
+              <div class="pwd-bar" id="bar3"></div>
+              <div class="pwd-bar" id="bar4"></div>
+            </div>
+            <div class="pwd-label" id="pwd-label"></div>
+          </div>
+          <div class="field">
+            <label>确认密码 <span class="required">*</span></label>
+            <input type="password" id="reg-pwd2" placeholder="再次输入密码" autocomplete="new-password">
+            <div class="field-hint" id="hint-pwd2"></div>
+          </div>
+          <div class="btn-row" style="flex-direction: column;">
+            <button class="btn-register" id="btn-step1" onclick="doRegister()">注 册</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Verify email -->
+      <div class="step-panel" id="step2">
+        <div class="success-panel active">
+          <div class="success-icon" style="border-color: rgba(200, 160, 80, 0.3); background: rgba(200, 160, 80, 0.08); color: #f0d888;">✉</div>
+          <div class="success-title">验证你的邮箱</div>
+          <div class="success-desc">
+            我们已向 <span class="email-highlight" id="email-display"></span> 发送了一封验证邮件<br>
+            请打开邮件并点击验证链接完成注册<br><br>
+            <span style="font-size: 11px; opacity: 0.6;">没收到？检查垃圾邮件文件夹</span>
+          </div>
+          <div class="resend-area">
+            <button class="resend-link" id="btn-resend" onclick="resendVerification()">重新发送验证邮件</button>
+          </div>
+          <button class="btn-login-redirect" onclick="window.location.href='index.html'">前往登录</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="links">
+        <a href="community.html">社区首页</a>
+        <a href="index.html">返回登录</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  /* ===== API 配置 ===== */
+  const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
+
+  /* ===== Ember particles ===== */
+  const embersEl = document.getElementById('embers');
+  const isMobile = window.innerWidth < 600;
+  const count = isMobile ? 60 : 350;
+  for (let i = 0; i < count; i++) {
+    const e = document.createElement('div');
+    e.className = 'ember';
+    const size = Math.random() * (isMobile ? 3 : 6) + 1.5;
+    const dur = isMobile ? (Math.random() * 6 + 4) : (Math.random() * 15 + 10);
+    e.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${Math.random() * 100}%;
+      bottom: ${-Math.random() * 15 - 5}%;
+      --drift: ${(Math.random() - 0.5) * 200}px;
+      animation-duration: ${dur}s;
+      animation-delay: ${Math.random() * (isMobile ? 6 : 20)}s;
+    `;
+    embersEl.appendChild(e);
+  }
+
+  const glow = document.querySelector('.emblem-glow');
+  document.addEventListener('mousemove', (ev) => {
+    if (!glow) return;
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const dx = (ev.clientX - cx) / cx;
+    const dy = (ev.clientY - cy) / cy;
+    glow.style.transform = `translate(calc(-50% + ${dx * 20}px), calc(-50% + ${dy * 15}px))`;
+  });
+
+  /* ===== Toast ===== */
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    requestAnimationFrame(() => t.classList.add('show'));
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  /* ===== Step navigation ===== */
+  function setStep(n) {
+    [1,2].forEach(i => {
+      document.getElementById('step' + i).classList.toggle('active', i === n);
+      document.getElementById('dot' + i).classList.toggle('active', i === n);
+      document.getElementById('dot' + i).classList.toggle('done', i < n);
+      document.getElementById('label' + i).classList.toggle('active', i === n);
+    });
+    document.getElementById('line1').classList.toggle('active', n > 1);
+  }
+
+  /* ===== Validation ===== */
+  function validateForm() {
+    const username = document.getElementById('reg-username').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pwd = document.getElementById('reg-pwd').value;
+    const pwd2 = document.getElementById('reg-pwd2').value;
+
+    if (!username || username.length < 2) {
+      showFieldHint('hint-username', '用户名至少2个字符', 'error');
+      return false;
+    }
+    showFieldHint('hint-username', '', '');
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showFieldHint('hint-email', '请输入正确的邮箱', 'error');
+      return false;
+    }
+    showFieldHint('hint-email', '', '');
+
+    if (!pwd || pwd.length < 6) {
+      showToast('密码至少6位', 'error');
+      return false;
+    }
+
+    if (pwd !== pwd2) {
+      showFieldHint('hint-pwd2', '两次密码不一致', 'error');
+      return false;
+    }
+    showFieldHint('hint-pwd2', '', '');
+
+    return true;
+  }
+
+  function showFieldHint(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = 'field-hint ' + (type || '');
+  }
+
+  /* ===== Password strength ===== */
+  document.getElementById('reg-pwd').addEventListener('input', function() {
+    const pwd = this.value;
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd) && /[^a-zA-Z0-9]/.test(pwd)) score++;
+
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('bar' + i).className = 'pwd-bar' + (i <= score ? ' s' + score : '');
+    }
+    const labels = ['', '弱', '一般', '较强', '强'];
+    const colors = ['', 'var(--red-bright)', '#e67e22', 'var(--gold-mid)', 'var(--green-ok)'];
+    document.getElementById('pwd-label').textContent = pwd ? '密码强度：' + labels[score] : '';
+    document.getElementById('pwd-label').style.color = colors[score] || 'rgba(200,160,80,0.3)';
+  });
+
+  /* ===== Register ===== */
+  let registeredEmail = '';
+
+  async function doRegister() {
+    if (!validateForm()) return;
+
+    const btn = document.getElementById('btn-step1');
+    const username = document.getElementById('reg-username').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pwd = document.getElementById('reg-pwd').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>注册中...';
+
+    try {
+      const r = await fetch(`${API_BASE}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, username, password: pwd })
+      });
+      const data = await r.json();
+
+      if (r.ok) {
+        // 注册成功 → 保存登录状态并跳转
+        localStorage.setItem('glory_token', data.token);
+        localStorage.setItem('glory_user', JSON.stringify(data.user));
+        showToast('注册成功', 'success');
+        setTimeout(() => window.location.href = 'community.html', 800);
+
+      } else if (data.code === 'EMAIL_EXISTS') {
+        // 邮箱已注册 → 引导去登录
+        showToast('该邮箱已被注册，请直接登录', 'error');
+        setTimeout(() => window.location.href = 'index.html', 1500);
+
+      } else {
+        showToast(data.error || '注册失败', 'error');
+      }
+
+    } catch (err) {
+      showToast('网络错误，请检查网络后重试', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '注 册';
+    }
+  }
+
+  /* ===== Resend verification ===== */
+  let resendCooldown = false;
+  async function resendVerification() {
+    if (resendCooldown) return;
+
+    const btn = document.getElementById('btn-resend');
+    const email = registeredEmail;
+    const pwd = document.getElementById('reg-pwd').value;
+
+    btn.disabled = true;
+    btn.textContent = '发送中...';
+
+    try {
+      const r = await fetch(`${API_BASE}/api/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pwd })
+      });
+      const data = await r.json();
+
+      if (r.ok) {
+        showToast('验证邮件已重新发送', 'success');
+        resendCooldown = true;
+        let sec = 60;
+        const timer = setInterval(() => {
+          sec--;
+          btn.textContent = sec + 's 后可重发';
+          if (sec <= 0) {
+            clearInterval(timer);
+            resendCooldown = false;
+            btn.disabled = false;
+            btn.textContent = '重新发送验证邮件';
+          }
+        }, 1000);
+      } else {
+        showToast(data.error || '发送失败', 'error');
+        btn.disabled = false;
+        btn.textContent = '重新发送验证邮件';
+      }
+
+    } catch (err) {
+      showToast('网络错误，请稍后重试', 'error');
+      btn.disabled = false;
+      btn.textContent = '重新发送验证邮件';
+    }
+  }
+
+  /* ===== Input events ===== */
+  document.getElementById('reg-username').addEventListener('blur', function() {
+    const v = this.value.trim();
+    if (v && v.length < 2) showFieldHint('hint-username', '用户名至少2个字符', 'error');
+    else showFieldHint('hint-username', '', '');
+  });
+
+  document.getElementById('reg-email').addEventListener('blur', function() {
+    const v = this.value.trim();
+    if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) showFieldHint('hint-email', '邮箱格式不正确', 'error');
+    else showFieldHint('hint-email', '', '');
+  });
+
+  document.getElementById('reg-pwd2').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doRegister();
+  });
+</script>
+</body>
+</html>

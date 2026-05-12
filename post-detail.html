@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>帖子详情 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html" class="active">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="padding-top:20px;padding-bottom:48px;max-width:860px;">
+  <div class="breadcrumb" id="breadcrumb"></div>
+  <div id="postSection"></div>
+  <div id="replySection"></div>
+  <div id="notFound" style="display:none;">
+    <div class="empty-state">
+      <div style="font-size:48px;margin-bottom:16px;">😢</div>
+      <p>未找到该帖子</p>
+      <a href="forum-home.html" class="btn btn-primary">返回讨论区</a>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="forum.js"></script>
+<script>
+  const FAVORITE_KEY = 'glory_forum_favorites';
+  const params = new URLSearchParams(window.location.search);
+  const postId = params.get('id');
+  let post = null;
+  let replies = [];
+
+  async function init() {
+    try {
+      post = await getPostById(postId);
+      if (!post) {
+        document.getElementById('postSection').style.display = 'none';
+        document.getElementById('replySection').style.display = 'none';
+        document.getElementById('notFound').style.display = 'block';
+        document.getElementById('breadcrumb').style.display = 'none';
+        return;
+      }
+
+      document.title = `${post.title} · 讨论区 · 荣耀社区`;
+
+      const cat = getCategoryById(post.category);
+      const catName = cat ? cat.name : '未知';
+      const catIcon = cat ? cat.icon : '📁';
+
+      document.getElementById('breadcrumb').innerHTML = `
+        <a href="forum-home.html">讨论区</a>
+        <span class="sep">/</span>
+        <a href="forum-category.html?cat=${post.category}">${catIcon} ${catName}</a>
+        <span class="sep">/</span>
+        <span>${escapeForumHtml(post.title)}</span>
+      `;
+
+      replies = await getRepliesByPost(postId);
+      renderPost();
+      renderReplies();
+    } catch (e) {
+      console.error('post-detail init error:', e);
+    }
+  }
+
+  function isFavorited() {
+    try {
+      const data = localStorage.getItem(FAVORITE_KEY);
+      const favs = data ? JSON.parse(data) : {};
+      return !!favs[postId];
+    } catch(e) { return false; }
+  }
+
+  function toggleFavorite() {
+    try {
+      const data = localStorage.getItem(FAVORITE_KEY);
+      const favs = data ? JSON.parse(data) : {};
+      if (favs[postId]) {
+        delete favs[postId];
+      } else {
+        favs[postId] = true;
+      }
+      localStorage.setItem(FAVORITE_KEY, JSON.stringify(favs));
+      return !!favs[postId];
+    } catch(e) { return false; }
+  }
+
+  function renderPost() {
+    const section = document.getElementById('postSection');
+    const liked = isLiked('post', post.id);
+    const favorited = isFavorited();
+
+    let tagsHtml = '';
+    if (post.tags && post.tags.length > 0) {
+      tagsHtml = '<div class="post-tags" style="margin-bottom:14px;">' +
+        post.tags.map(t => `<a class="post-tag" href="forum-category.html?cat=${post.category}" onclick="event.stopPropagation()">${escapeForumHtml(t)}</a>`).join('') + '</div>';
+    }
+
+    const formattedContent = formatPostContent(post.content);
+    const isOwner = getUser() && getUser().email === post.authorId;
+
+    section.innerHTML = `
+      <div class="post-detail-card">
+        <div class="post-detail-title">${escapeForumHtml(post.title)}</div>
+        <div class="post-detail-info">
+          <div class="post-author-row">
+            <div class="post-author-avatar">${post.authorName[0]}</div>
+            <div class="post-author-meta">
+              <span class="author">${escapeForumHtml(post.authorName)}</span>
+              <span class="user-badge${post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : ''}">Lv.${post.authorLevel}</span>
+            </div>
+          </div>
+          <div class="post-time-row">
+            <span>📅 ${new Date(post.createdAt).toLocaleString('zh-CN')}</span>
+            <span>👁️ ${post.viewCount} 次浏览</span>
+          </div>
+        </div>
+        ${tagsHtml}
+        <div class="post-detail-content">${formattedContent}</div>
+        <div class="post-detail-actions">
+          <button class="post-action-btn ${liked ? 'liked' : ''}" onclick="handleLikePost(this)">
+            👍 <span>${post.likeCount}</span>
+          </button>
+          <button class="post-action-btn ${favorited ? 'favorited' : ''}" onclick="handleFavorite(this)">
+            ⭐ <span>${favorited ? '已收藏' : '收藏'}</span>
+          </button>
+          <button class="post-action-btn" onclick="scrollToReply()">
+            💬 回复
+          </button>
+          <button class="post-action-btn" onclick="sharePost()">
+            🔗 分享
+          </button>
+          ${isOwner ? '<button class="post-action-btn post-action-delete" onclick="handleDeletePost()">🗑️ 删除</button>' : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderReplies() {
+    const section = document.getElementById('replySection');
+    const topReplies = replies.filter(r => !r.replyTo);
+    const childReplies = replies.filter(r => r.replyTo);
+
+    let repliesHtml = '';
+    if (replies.length > 0) {
+      repliesHtml = topReplies.map((r, index) => {
+        const liked = isLiked('reply', r.id);
+        let mentionHtml = '';
+        if (r.mentionUser) {
+          mentionHtml = `<span class="mention-user">@${escapeForumHtml(r.mentionUser)}</span> `;
+        }
+
+        const children = childReplies.filter(cr => cr.replyTo === r.id);
+        let childrenHtml = '';
+        if (children.length > 0) {
+          childrenHtml = '<div class="reply-children">' + children.map(cr => {
+            const childLiked = isLiked('reply', cr.id);
+            let childMention = cr.mentionUser ? `<span class="mention-user">@${escapeForumHtml(cr.mentionUser)}</span> ` : '';
+            return `
+              <div class="reply-child" id="reply-${cr.id}">
+                <div class="reply-child-avatar">${cr.authorName[0]}</div>
+                <div class="reply-child-body">
+                  <div class="reply-header">
+                    <span class="author">${escapeForumHtml(cr.authorName)}</span>
+                    <span class="user-badge${cr.authorLevel >= 8 ? ' gold' : cr.authorLevel >= 5 ? '' : ''}">Lv.${cr.authorLevel}</span>
+                    <span class="reply-time">${forumTimeAgo(cr.createdAt)}</span>
+                  </div>
+                  <div class="reply-text">${childMention}${formatPostContent(cr.content)}</div>
+                  <div class="reply-actions">
+                    <button class="reply-action ${childLiked ? 'liked' : ''}" onclick="handleLikeReply(this, '${cr.id}')">👍 ${cr.likeCount}</button>
+                    <button class="reply-action" onclick="replyToUser('${escapeForumHtml(cr.authorName)}', '${cr.id}')">回复</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('') + '</div>';
+        }
+
+        return `
+          <div class="reply-item" id="reply-${r.id}">
+            <div class="reply-avatar">${r.authorName[0]}</div>
+            <div class="reply-body">
+              <div class="reply-header">
+                <span class="author">${escapeForumHtml(r.authorName)}</span>
+                <span class="user-badge${r.authorLevel >= 8 ? ' gold' : r.authorLevel >= 5 ? '' : ''}">Lv.${r.authorLevel}</span>
+                <span class="reply-time">${forumTimeAgo(r.createdAt)}</span>
+                <span class="reply-floor">#${index + 1}</span>
+              </div>
+              <div class="reply-text">${mentionHtml}${formatPostContent(r.content)}</div>
+              <div class="reply-actions">
+                <button class="reply-action ${liked ? 'liked' : ''}" onclick="handleLikeReply(this, '${r.id}')">👍 ${r.likeCount}</button>
+                <button class="reply-action" onclick="replyToUser('${escapeForumHtml(r.authorName)}', '${r.id}')">💬 回复</button>
+              </div>
+              ${childrenHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      repliesHtml = `
+        <div class="reply-empty">
+          <div style="font-size:36px;margin-bottom:8px;">💬</div>
+          <p>暂无回复，快来抢沙发！</p>
+        </div>`;
+    }
+
+    const hasToken = !!getToken();
+    const replyFormHtml = post.isLocked ? '<p style="color:var(--text-3);padding:16px 0;font-size:14px;text-align:center;">🔒 该帖子已锁定，无法回复</p>' : (hasToken ? `
+      <div class="reply-form-wrap" id="replyForm">
+        <div class="reply-form-header">写下你的回复</div>
+        <div class="comment-form">
+          <textarea id="replyInput" placeholder="说点什么..." rows="3"></textarea>
+          <button class="btn btn-primary" onclick="submitReply()">发送</button>
+        </div>
+        <div class="reply-form-hint">支持 @提及用户，点击回复按钮自动填入</div>
+      </div>
+    ` : '<p style="color:var(--text-3);padding:16px 0;font-size:14px;text-align:center;"><a href="index.html" style="color:var(--blue-3);">登录</a>后才能回复</p>');
+
+    section.innerHTML = `
+      <div class="info-card" style="margin-top:20px;">
+        <div class="reply-section-header">
+          <h2>💬 回复（${replies.length}）</h2>
+        </div>
+        <div class="reply-list">${repliesHtml}</div>
+        ${replyFormHtml}
+      </div>
+    `;
+  }
+
+  async function handleLikePost(btn) {
+    try {
+      const result = await toggleLike('post', post.id);
+      post.likeCount = result.likeCount;
+      btn.classList.toggle('liked', result.liked);
+      btn.querySelector('span').textContent = result.likeCount;
+    } catch (e) {
+      showToast('操作失败：' + e.message);
+    }
+  }
+
+  function handleFavorite(btn) {
+    const fav = toggleFavorite();
+    btn.classList.toggle('favorited', fav);
+    btn.querySelector('span').textContent = fav ? '已收藏' : '收藏';
+  }
+
+  async function handleLikeReply(btn, replyId) {
+    try {
+      const result = await toggleLike('reply', replyId);
+      const r = replies.find(x => x.id === replyId);
+      if (r) r.likeCount = result.likeCount;
+      btn.textContent = '👍 ' + result.likeCount;
+      btn.classList.toggle('liked', result.liked);
+    } catch (e) {
+      showToast('操作失败：' + e.message);
+    }
+  }
+
+  function replyToUser(username, replyId) {
+    const input = document.getElementById('replyInput');
+    if (!input) return;
+    input.value = `@${username} `;
+    input.focus();
+    input.dataset.replyTo = replyId;
+    input.dataset.mentionUser = username;
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function scrollToReply() {
+    const input = document.getElementById('replyInput');
+    if (input) {
+      input.focus();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+  }
+
+  async function submitReply() {
+    const input = document.getElementById('replyInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) { alert('请输入回复内容'); return; }
+
+    try {
+      await createReply({
+        postId: postId,
+        content: text,
+        replyTo: input.dataset.replyTo || null,
+        mentionUser: input.dataset.mentionUser || null
+      });
+
+      input.value = '';
+      delete input.dataset.replyTo;
+      delete input.dataset.mentionUser;
+
+      post = await getPostById(postId);
+      replies = await getRepliesByPost(postId);
+      renderPost();
+      renderReplies();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      showToast('回复成功！');
+    } catch (e) {
+      showToast('回复失败：' + e.message);
+    }
+  }
+
+  function sharePost() {
+    const url = window.location.href;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('链接已复制到剪贴板');
+      }).catch(() => {
+        prompt('复制以下链接分享：', url);
+      });
+    } else {
+      prompt('复制以下链接分享：', url);
+    }
+  }
+
+  async function handleDeletePost() {
+    if (!confirm('确定要删除这篇帖子吗？删除后无法恢复。')) return;
+    try {
+      await deletePost(postId);
+      showToast('帖子已删除');
+      setTimeout(() => {
+        window.location.href = `forum-category.html?cat=${post.category}`;
+      }, 800);
+    } catch (e) {
+      showToast('删除失败：' + e.message);
+    }
+  }
+
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2000);
+  }
+
+  init();
+</script>
+
+<style>
+  .post-author-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .post-author-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-5), var(--green-5));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+    color: var(--blue-2);
+    border: 2px solid var(--border);
+  }
+  .post-author-meta {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .post-time-row {
+    display: flex; gap: 16px;
+    font-size: 12px; color: var(--text-3);
+  }
+
+  .post-action-btn.favorited {
+    background: #fff8e1;
+    border-color: #ffcc80;
+    color: #e65100;
+  }
+  .post-action-delete {
+    color: #c62828 !important;
+    margin-left: auto;
+  }
+  .post-action-delete:hover {
+    background: #ffebee;
+    border-color: #ef9a9a;
+  }
+
+  .reply-section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px;
+  }
+  .reply-section-header h2 {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .reply-floor {
+    font-size: 11px; color: var(--text-3);
+    margin-left: auto;
+    font-weight: 500;
+  }
+  .reply-time {
+    font-size: 12px; color: var(--text-3);
+  }
+
+  .mention-user {
+    color: var(--blue-3);
+    font-weight: 600;
+  }
+
+  .reply-children {
+    margin-top: 12px;
+    padding-left: 0;
+    border-left: 3px solid var(--blue-5);
+    margin-left: 0;
+  }
+  .reply-child {
+    display: flex; gap: 10px;
+    padding: 12px 0 12px 12px;
+    border-bottom: 1px solid #f8f8f8;
+  }
+  .reply-child:last-child { border-bottom: none; }
+  .reply-child-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--green-5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    color: var(--green-2);
+    flex-shrink: 0;
+  }
+  .reply-child-body { flex: 1; min-width: 0; }
+
+  .reply-empty {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--text-3);
+  }
+  .reply-empty p { font-size: 14px; }
+
+  .reply-form-wrap {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .reply-form-header {
+    font-size: 14px; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .reply-form-hint {
+    font-size: 12px; color: var(--text-3);
+    margin-top: 8px;
+  }
+
+  .toast-msg {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0,0,0,0.8);
+    color: var(--white);
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  .toast-msg.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .reply-action.liked {
+    color: var(--blue-3) !important;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .post-detail-card { padding: 20px 16px; }
+    .post-detail-title { font-size: 18px; }
+    .reply-child { padding-left: 8px; }
+  }
+</style>
+</body>
+</html>

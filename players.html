@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选手百科 · 荣耀社区</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="community.html" class="topbar-brand"><img src="favicon.png" alt="荣耀" class="brand-icon"> 荣耀社区</a>
+    <button class="menu-toggle" onclick="document.querySelector('.topbar-nav').classList.toggle('open')">☰</button>
+    <nav class="topbar-nav">
+      <a href="community.html">首页</a>
+      <a href="players.html" class="active">选手百科</a>
+      <a href="teams.html">战队阵容</a>
+      <a href="forum-home.html">讨论区</a>
+      <a href="oc-home.html">OC中心</a>
+    </nav>
+    <div class="topbar-right">
+      <a href="search.html" class="nav-text-btn">搜索</a>
+      <a href="notifications.html" class="nav-text-btn">通知</a>
+      <a href="profile.html" class="nav-text-btn">我的</a>
+      <a href="index.html" class="btn-logout">退出</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>👤 选手百科</h1>
+    <p>荣耀职业联盟全部战队选手资料 · 支持按战队筛选</p>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="filter-search">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索选手姓名、游戏ID..." oninput="filterPlayers()">
+    </div>
+    <select class="filter-select" id="statusFilter" onchange="filterPlayers()">
+      <option value="all">全部状态</option>
+      <option value="现役">现役</option>
+      <option value="退役">退役</option>
+      <option value="转会">转会</option>
+    </select>
+  </div>
+</div>
+
+<div class="container">
+  <div class="team-tabs" id="teamTabs"></div>
+  <div class="players-grid" id="playersGrid"></div>
+  <div id="emptyState" style="display:none;text-align:center;padding:60px 0;color:var(--text-3);">
+    <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+    <p style="font-size:15px;">没有找到匹配的选手</p>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>🏆 荣耀社区 · 全职高手同人站</p>
+</footer>
+
+<script src="players.js"></script>
+<script>
+  let currentTeam = 'all';
+
+  function renderTabs() {
+    const container = document.getElementById('teamTabs');
+    TEAMS.forEach(t => {
+      const tab = document.createElement('span');
+      tab.className = 'team-tab' + (t.id === 'all' ? ' active' : '');
+      tab.textContent = t.name;
+      tab.dataset.id = t.id;
+      tab.onclick = () => {
+        document.querySelectorAll('.team-tab').forEach(el => el.classList.remove('active'));
+        tab.classList.add('active');
+        currentTeam = t.id;
+        filterPlayers();
+      };
+      container.appendChild(tab);
+    });
+  }
+
+  function renderCards(list) {
+    const grid = document.getElementById('playersGrid');
+    const empty = document.getElementById('emptyState');
+    grid.innerHTML = '';
+    if (list.length === 0) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.forEach(p => {
+      const card = document.createElement('a');
+      card.className = 'player-card';
+      card.href = `player-detail.html?id=${p.id}`;
+      const sc = p.status === '现役' ? 'tag-active' : (p.status === '退役' ? 'tag-retired' : 'tag-status');
+      card.innerHTML = `
+        <div class="player-card-top"></div>
+        <div class="player-card-body">
+          <div class="player-avatar">${p.avatar}</div>
+          <div class="player-info">
+            <h3>${p.name}</h3>
+            <div class="game-id">${p.gameId.split('/')[0].trim()}</div>
+            <div class="meta">
+              <span class="tag tag-class">${p.class.split('/')[0].split('（')[0]}</span>
+              <span class="tag tag-team">${p.teamShort}</span>
+              <span class="tag ${sc}">${p.status}</span>
+            </div>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function filterPlayers() {
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    let list = PLAYERS;
+    if (currentTeam !== 'all') list = list.filter(p => p.team.includes(currentTeam) || p.teamShort === currentTeam);
+    if (status !== 'all') list = list.filter(p => p.status === status);
+    if (search) list = list.filter(p => p.name.toLowerCase().includes(search) || p.gameId.toLowerCase().includes(search) || p.class.toLowerCase().includes(search) || p.team.toLowerCase().includes(search) || p.honors.some(h => h.toLowerCase().includes(search)));
+    renderCards(list);
+  }
+
+  renderTabs();
+  filterPlayers();
+</script>
+</body>
+</html>
