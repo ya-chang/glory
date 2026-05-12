@@ -376,7 +376,7 @@
 
     <div class="emblem-wrap">
       <div class="emblem-glow"></div>
-      <img class="emblem-img" src="主徽章.png" alt="荣耀 Glory" draggable="false">
+      <img class="emblem-img" src="https://iili.io/Bb45QLl.png" alt="荣耀 Glory" draggable="false">
     </div>
 
     <div class="divider"></div>
@@ -423,7 +423,7 @@
 
     <div class="bottom">
       <div class="links">
-        <a href="community.html" style="color:rgba(200,160,80,0.55);">社区首页</a>
+        <span style="color:rgba(200,160,80,0.15);cursor:default;pointer-events:none;">社区首页</span>
         <a href="register.html">账号注册</a>
         <a>客服中心</a>
       </div>
@@ -484,6 +484,34 @@
   }
 
   /* ===== Login ===== */
+  // 带重试的 fetch 请求
+  async function fetchWithRetry(url, options, retries = 2, delay = 2000) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          if (i < retries) {
+            showToast(`请求超时，正在重试 (${i + 1}/${retries})...`, 'error');
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+          throw new Error('请求超时，服务器响应较慢，请稍后再试');
+        }
+        if (i < retries) {
+          showToast(`网络不稳定，正在重试 (${i + 1}/${retries})...`, 'error');
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
   async function doLogin() {
     const email = document.getElementById('login-email').value.trim();
     const pwd = document.getElementById('login-pwd').value;
@@ -496,7 +524,7 @@
     btn.innerHTML = '<span class="spinner"></span>登录中...';
 
     try {
-      const r = await fetch(`${API_BASE}/api/login`, {
+      const r = await fetchWithRetry(`${API_BASE}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pwd })
@@ -525,7 +553,7 @@
       setTimeout(() => window.location.href = 'community.html', 800);
 
     } catch (err) {
-      showToast('网络错误，请检查网络后重试', 'error');
+      showToast(err.message || '网络错误，请检查网络后重试', 'error');
       btn.disabled = false;
       btn.textContent = '登 录';
     }

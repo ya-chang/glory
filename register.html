@@ -532,7 +532,7 @@
 
     <div class="emblem-wrap">
       <div class="emblem-glow"></div>
-      <img class="emblem-img" src="主徽章.png" alt="荣耀 Glory" draggable="false">
+      <img class="emblem-img" src="https://iili.io/Bb45QLl.png" alt="荣耀 Glory" draggable="false">
     </div>
 
     <div class="divider"></div>
@@ -729,6 +729,34 @@
   /* ===== Register ===== */
   let registeredEmail = '';
 
+  // 带重试的 fetch 请求
+  async function fetchWithRetry(url, options, retries = 2, delay = 2000) {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          if (i < retries) {
+            showToast(`请求超时，正在重试 (${i + 1}/${retries})...`, 'error');
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+          throw new Error('请求超时，服务器响应较慢，请稍后再试');
+        }
+        if (i < retries) {
+          showToast(`网络不稳定，正在重试 (${i + 1}/${retries})...`, 'error');
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
   async function doRegister() {
     if (!validateForm()) return;
 
@@ -741,7 +769,7 @@
     btn.innerHTML = '<span class="spinner"></span>注册中...';
 
     try {
-      const r = await fetch(`${API_BASE}/api/register`, {
+      const r = await fetchWithRetry(`${API_BASE}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, username, password: pwd })
@@ -765,7 +793,8 @@
       }
 
     } catch (err) {
-      showToast('网络错误，请检查网络后重试', 'error');
+      const msg = err.message || '网络错误，请检查网络后重试';
+      showToast(msg, 'error');
     } finally {
       btn.disabled = false;
       btn.textContent = '注 册';
