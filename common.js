@@ -117,7 +117,7 @@ function showToast(msg, type) {
 /* ===== 图片上传到图床 ===== */
 async function uploadToImgHost(file) {
   var formData = new FormData();
-  formData.append('file', file);
+  formData.append('source', file);
   var res = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
     method: 'POST', body: formData
   });
