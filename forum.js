@@ -37,6 +37,13 @@ async function getPostsByCategory(categoryId, opts) {
   } catch(e) { console.error('getPostsByCategory error:', e); return { items: [], total: 0, page: 1, pageSize: 20, totalPages: 0 }; }
 }
 
+async function getPostsByAuthor(authorEmail, page, pageSize) {
+  page = page || 1; pageSize = pageSize || 50;
+  try {
+    return await apiGet('/api/forum/posts?author=' + encodeURIComponent(authorEmail) + '&page=' + page + '&pageSize=' + pageSize);
+  } catch(e) { console.error('getPostsByAuthor error:', e); return { items: [], total: 0 }; }
+}
+
 /* ===== 回复 API ===== */
 
 async function getRepliesByPost(postId) {

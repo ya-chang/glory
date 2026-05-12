@@ -448,10 +448,20 @@ app.get('/api/forum/categories', (req, res) => {
 // 获取帖子列表
 app.get('/api/forum/posts', async (req, res) => {
   try {
-    const { category, sort = 'latest', page = 1, pageSize = 20 } = req.query;
+    const { category, author, sort = 'latest', page = 1, pageSize = 20 } = req.query;
     if (category) {
       const result = await db.getPostsByCategory(category, { sort, page: parseInt(page), pageSize: parseInt(pageSize) });
       return res.json(result);
+    }
+    // 按作者筛选
+    if (author) {
+      const allPosts = await db.getForumPosts();
+      let posts = allPosts.filter(p => p.authorId === author);
+      posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const total = posts.length;
+      const start = (parseInt(page) - 1) * parseInt(pageSize);
+      const items = posts.slice(start, start + parseInt(pageSize));
+      return res.json({ items, total, page: parseInt(page), pageSize: parseInt(pageSize), totalPages: Math.ceil(total / parseInt(pageSize)) });
     }
     // 无分类则返回全部
     const allPosts = await db.getForumPosts();

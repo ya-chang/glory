@@ -136,6 +136,12 @@
   var pendingAvatar = null;  // null=未修改, ''=已清除, 'url'=新上传
   var existingAvatar = '';
 
+  // 立即从缓存填充用户名，避免空白闪烁
+  var cachedUser = getUser();
+  if (cachedUser && cachedUser.username) {
+    document.getElementById('s_name').value = cachedUser.username;
+  }
+
   // 加载用户资料
   async function loadSettings() {
     try {

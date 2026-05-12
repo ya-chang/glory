@@ -182,9 +182,8 @@
 
   async function loadUserPosts(email) {
     try {
-      const allPosts = await getAllPosts();
-      const userPosts = allPosts.filter(p => p.authorId === email)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const result = await getPostsByAuthor(email);
+      const userPosts = result.items || [];
       const container = document.getElementById('userPosts');
 
       if (userPosts.length === 0) {

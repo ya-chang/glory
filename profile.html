@@ -162,7 +162,6 @@
 
 <script src="common.js"></script>
 <script src="forum.js"></script>
-<script src="common.js"></script>
 <script src="oc.js"></script>
 <script>
   // ===== 检查登录 =====
@@ -370,10 +369,10 @@
 
   async function renderMyPosts() {
     try {
-      const allPosts = await getAllPosts();
       const user = getUser();
-      const myPosts = allPosts.filter(p => user && p.authorId === user.email)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (!user) return;
+      const result = await getPostsByAuthor(user.email);
+      const myPosts = result.items || [];
       const container = document.getElementById('myPosts');
 
       if (myPosts.length === 0) {
