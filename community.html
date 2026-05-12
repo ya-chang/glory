@@ -107,6 +107,9 @@
 <script src="players.js"></script>
 <script src="forum.js"></script>
 <script>
+  // 首次访问显示规则弹窗
+  showRulesModal();
+
   // 热门选手（静态数据）
   const hotIds = ['yexiu','huangshaotian','zhouzekai','wangjiexi','hanwenqing','yuwenzhou'];
   const hotPlayers = PLAYERS.filter(p => hotIds.includes(p.id));

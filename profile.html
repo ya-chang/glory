@@ -44,8 +44,9 @@
         <div class="profile-title" id="profileTitle">新手玩家</div>
         <div class="profile-join">📅 加入于 <span id="profileJoinDate">2026-05-01</span></div>
       </div>
-      <div class="profile-actions">
+      <div class="profile-actions" id="profileActions">
         <a href="settings.html" class="btn btn-secondary" style="background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.3);color:#fff;">⚙️ 编辑资料</a>
+        <a href="post-new.html?cat=meta&announce=1" class="btn btn-secondary admin-announce-btn" id="adminAnnounceBtn" style="display:none;background:rgba(106,27,154,0.3);border-color:rgba(106,27,154,0.5);color:#fff;margin-left:8px;">📢 发公告</a>
       </div>
     </div>
   </div>
@@ -322,6 +323,10 @@
 
       // 基本信息
       document.getElementById('profileName').textContent = profileData.username || '荣耀玩家';
+      if (isAdmin()) {
+        document.getElementById('profileName').textContent = profileData.username || '管理员';
+        document.getElementById('profileName').innerHTML = (profileData.username || '管理员') + ' <span style="background:#6a1b9a;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;">管理员</span>';
+      }
       document.getElementById('profileTitle').textContent = levelInfo.current.name;
       document.getElementById('profileJoinDate').textContent = profileData.joinDate || '2026-05-01';
 
@@ -362,6 +367,12 @@
       renderMyOCs();
       // 签到
       renderCheckin();
+
+      // 管理员显示公告按钮
+      if (isAdmin()) {
+        var btn = document.getElementById('adminAnnounceBtn');
+        if (btn) btn.style.display = 'inline-block';
+      }
     } catch (e) {
       console.error('renderProfile error:', e);
     }

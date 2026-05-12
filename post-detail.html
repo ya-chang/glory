@@ -127,10 +127,23 @@
     }
 
     const formattedContent = formatPostContent(post.content);
-    const isOwner = getUser() && getUser().email === post.authorId;
+    const user = getUser();
+    const isOwner = user && user.email === post.authorId;
+    const admin = isAdmin();
+
+    // 管理员操作按钮
+    let adminHtml = '';
+    if (admin) {
+      adminHtml = '<button class="post-action-btn" onclick="handlePinPost()" style="color:#e65100;">' +
+        (post.isPinned ? '📌 取消置顶' : '📌 置顶') + '</button>' +
+        '<button class="post-action-btn" onclick="handleLockPost()" style="color:#6a1b9a;">' +
+        (post.isLocked ? '🔓 解锁帖子' : '🔒 锁定帖子') + '</button>';
+    }
 
     section.innerHTML = `
       <div class="post-detail-card">
+        ${post.isPinned ? '<div style="background:#fff3e0;color:#e65100;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:12px;display:inline-block;">📌 已置顶</div>' : ''}
+        ${post.isLocked ? '<div style="background:#f3e5f5;color:#6a1b9a;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:12px;display:inline-block;">🔒 帖子已锁定</div>' : ''}
         <div class="post-detail-title">${escapeForumHtml(post.title)}</div>
         <div class="post-detail-info">
           <div class="post-author-row">
@@ -160,7 +173,8 @@
           <button class="post-action-btn" onclick="sharePost()">
             🔗 分享
           </button>
-          ${isOwner ? '<button class="post-action-btn post-action-delete" onclick="handleDeletePost()">🗑️ 删除</button>' : ''}
+          ${adminHtml}
+          ${isOwner || admin ? '<button class="post-action-btn post-action-delete" onclick="handleDeletePost()">🗑️ 删除</button>' : ''}
         </div>
       </div>
     `;
@@ -170,6 +184,8 @@
     const section = document.getElementById('replySection');
     const topReplies = replies.filter(r => !r.replyTo);
     const childReplies = replies.filter(r => r.replyTo);
+    const user = getUser();
+    const admin = isAdmin();
 
     let repliesHtml = '';
     if (replies.length > 0) {
@@ -180,12 +196,15 @@
           mentionHtml = `<span class="mention-user">@${escapeForumHtml(r.mentionUser)}</span> `;
         }
 
+        const canDeleteReply = admin || (user && user.email === r.authorId);
+
         const children = childReplies.filter(cr => cr.replyTo === r.id);
         let childrenHtml = '';
         if (children.length > 0) {
           childrenHtml = '<div class="reply-children">' + children.map(cr => {
             const childLiked = isLiked('reply', cr.id);
             let childMention = cr.mentionUser ? `<span class="mention-user">@${escapeForumHtml(cr.mentionUser)}</span> ` : '';
+            const canDeleteChild = admin || (user && user.email === cr.authorId);
             return `
               <div class="reply-child" id="reply-${cr.id}">
                 <div class="reply-child-avatar">${cr.authorName[0]}</div>
@@ -199,6 +218,7 @@
                   <div class="reply-actions">
                     <button class="reply-action ${childLiked ? 'liked' : ''}" onclick="handleLikeReply(this, '${cr.id}')">👍 ${cr.likeCount}</button>
                     <button class="reply-action" onclick="replyToUser('${escapeForumHtml(cr.authorName)}', '${cr.id}')">回复</button>
+                    ${canDeleteChild ? '<button class="reply-action" onclick="handleDeleteReply(\'' + cr.id + '\')" style="color:#c62828;">🗑️</button>' : ''}
                   </div>
                 </div>
               </div>
@@ -220,6 +240,7 @@
               <div class="reply-actions">
                 <button class="reply-action ${liked ? 'liked' : ''}" onclick="handleLikeReply(this, '${r.id}')">👍 ${r.likeCount}</button>
                 <button class="reply-action" onclick="replyToUser('${escapeForumHtml(r.authorName)}', '${r.id}')">💬 回复</button>
+                ${canDeleteReply ? '<button class="reply-action" onclick="handleDeleteReply(\'' + r.id + '\')" style="color:#c62828;">🗑️ 删除</button>' : ''}
               </div>
               ${childrenHtml}
             </div>
@@ -354,6 +375,45 @@
       setTimeout(() => {
         window.location.href = `forum-category.html?cat=${post.category}`;
       }, 800);
+    } catch (e) {
+      showToast('删除失败：' + e.message);
+    }
+  }
+
+  async function handlePinPost() {
+    try {
+      var result = await apiPut('/api/admin/posts/' + postId + '/pin', {});
+      if (!result) return;
+      post.isPinned = result.isPinned;
+      renderPost();
+      showToast(result.message);
+    } catch (e) {
+      showToast('操作失败：' + e.message);
+    }
+  }
+
+  async function handleLockPost() {
+    try {
+      var result = await apiPut('/api/admin/posts/' + postId + '/lock', {});
+      if (!result) return;
+      post.isLocked = result.isLocked;
+      renderPost();
+      renderReplies();
+      showToast(result.message);
+    } catch (e) {
+      showToast('操作失败：' + e.message);
+    }
+  }
+
+  async function handleDeleteReply(replyId) {
+    if (!confirm('确定要删除这条回复吗？')) return;
+    try {
+      await apiDelete('/api/forum/replies/' + replyId);
+      post = await getPostById(postId);
+      replies = await getRepliesByPost(postId);
+      renderPost();
+      renderReplies();
+      showToast('回复已删除');
     } catch (e) {
       showToast('删除失败：' + e.message);
     }

@@ -117,6 +117,33 @@ function sanitizeUsername(str) {
 const JWT_SECRET = process.env.JWT_SECRET || 'glory-secret-change-me-in-production';
 const SITE_URL = process.env.SITE_URL || 'https://ya-chang.github.io/glory';
 
+// ============ 管理员初始化 ============
+const ADMIN_EMAIL = '3117797385@qq.com';
+const ADMIN_PASSWORD = 'wsrs0927';
+
+async function ensureAdmin() {
+  try {
+    const existing = await db.getUserByEmail(ADMIN_EMAIL);
+    if (!existing) {
+      const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+      await db.createUser(ADMIN_EMAIL, '管理员', hash);
+      await db.updateUser(ADMIN_EMAIL, { emailVerified: true, role: 'admin' });
+      await db.updateUserProfile(ADMIN_EMAIL, {
+        username: '管理员',
+        joinDate: new Date().toISOString().slice(0, 10),
+        exp: 99999
+      });
+      console.log('[Admin] Created admin account:', ADMIN_EMAIL);
+    } else if (existing.role !== 'admin') {
+      await db.updateUser(ADMIN_EMAIL, { role: 'admin' });
+      console.log('[Admin] Upgraded to admin:', ADMIN_EMAIL);
+    }
+  } catch (err) {
+    console.error('[Admin] Init error:', err.message);
+  }
+}
+ensureAdmin();
+
 // ============ Auth 中间件 ============
 
 function requireAuth(req, res, next) {
@@ -144,6 +171,26 @@ function optionalAuth(req, res, next) {
     } catch (err) {}
   }
   next();
+}
+
+// 管理员权限中间件
+async function requireAdmin(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: '未登录' });
+  }
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    const user = await db.getUserByEmail(decoded.email);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: '需要管理员权限' });
+    }
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: '登录已过期' });
+  }
 }
 
 // ============ 注册 ============
@@ -175,22 +222,22 @@ app.post('/api/register', async (req, res) => {
       if (existing.emailVerified) {
         return res.status(409).json({ error: '该邮箱已被注册', code: 'EMAIL_EXISTS' });
       }
-      await db.updateUser(userEmail, { emailVerified: true });
+      await db.updateUser(userEmail, { emailVerified: true, role: existing.role || 'user' });
       const token = jwt.sign(
-        { email: existing.email, username: existing.username },
+        { email: existing.email, username: existing.username, role: existing.role || 'user' },
         JWT_SECRET,
         { expiresIn: '7d' }
       );
       return res.json({
         message: '注册成功',
         token,
-        user: { email: existing.email, username: existing.username }
+        user: { email: existing.email, username: existing.username, role: existing.role || 'user' }
       });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = await db.createUser(userEmail, cleanUsername, passwordHash);
-    await db.updateUser(userEmail, { emailVerified: true });
+    await db.updateUser(userEmail, { emailVerified: true, role: 'user' });
 
     // 创建默认用户资料
     await db.updateUserProfile(userEmail, {
@@ -200,7 +247,7 @@ app.post('/api/register', async (req, res) => {
     });
 
     const token = jwt.sign(
-      { email: newUser.email, username: newUser.username },
+      { email: newUser.email, username: newUser.username, role: 'user' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -208,7 +255,7 @@ app.post('/api/register', async (req, res) => {
     res.json({
       message: '注册成功',
       token,
-      user: { email: newUser.email, username: newUser.username }
+      user: { email: newUser.email, username: newUser.username, role: 'user' }
     });
 
   } catch (err) {
@@ -292,7 +339,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { email: user.email, username: user.username },
+      { email: user.email, username: user.username, role: user.role || 'user' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -300,7 +347,7 @@ app.post('/api/login', async (req, res) => {
     res.json({
       message: '登录成功',
       token,
-      user: { email: user.email, username: user.username }
+      user: { email: user.email, username: user.username, role: user.role || 'user' }
     });
 
   } catch (err) {
@@ -558,12 +605,13 @@ app.put('/api/forum/posts/:id', requireAuth, async (req, res) => {
   }
 });
 
-// 删除帖子
+// 删除帖子（管理员可删任何帖子）
 app.delete('/api/forum/posts/:id', requireAuth, async (req, res) => {
   try {
     const post = await db.getForumPostById(req.params.id);
     if (!post) return res.status(404).json({ error: '帖子不存在' });
-    if (post.authorId !== req.user.email) {
+    const user = await db.getUserByEmail(req.user.email);
+    if (post.authorId !== req.user.email && (!user || user.role !== 'admin')) {
       return res.status(403).json({ error: '只能删除自己的帖子' });
     }
     await db.deleteForumPost(req.params.id);
@@ -641,12 +689,13 @@ app.post('/api/forum/posts/:id/replies', requireAuth, async (req, res) => {
   }
 });
 
-// 删除回复
+// 删除回复（管理员可删任何回复）
 app.delete('/api/forum/replies/:id', requireAuth, async (req, res) => {
   try {
     const reply = await db.getReplyById(req.params.id);
     if (!reply) return res.status(404).json({ error: '回复不存在' });
-    if (reply.authorId !== req.user.email) {
+    const user = await db.getUserByEmail(req.user.email);
+    if (reply.authorId !== req.user.email && (!user || user.role !== 'admin')) {
       return res.status(403).json({ error: '只能删除自己的回复' });
     }
     await db.deleteForumReply(req.params.id);
@@ -974,6 +1023,80 @@ app.get('/api/search', async (req, res) => {
     });
   } catch (err) {
     console.error('[Search] Error:', err);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// ============ 管理员 API ============
+
+// 置顶/取消置顶帖子
+app.put('/api/admin/posts/:id/pin', requireAdmin, async (req, res) => {
+  try {
+    const post = await db.getForumPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: '帖子不存在' });
+    const updated = await db.updateForumPost(req.params.id, { isPinned: !post.isPinned });
+    res.json({ message: updated.isPinned ? '已置顶' : '已取消置顶', isPinned: updated.isPinned });
+  } catch (err) {
+    console.error('[Admin] Pin post error:', err);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 锁定/解锁帖子
+app.put('/api/admin/posts/:id/lock', requireAdmin, async (req, res) => {
+  try {
+    const post = await db.getForumPostById(req.params.id);
+    if (!post) return res.status(404).json({ error: '帖子不存在' });
+    const updated = await db.updateForumPost(req.params.id, { isLocked: !post.isLocked });
+    res.json({ message: updated.isLocked ? '已锁定' : '已解锁', isLocked: updated.isLocked });
+  } catch (err) {
+    console.error('[Admin] Lock post error:', err);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 发布公告（创建置顶帖到站务中心）
+app.post('/api/admin/announcements', requireAdmin, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const cleanTitle = sanitizeText(title, 100);
+    const cleanContent = sanitizeText(content, 50000);
+    if (!cleanTitle || !cleanContent) {
+      return res.status(400).json({ error: '标题和内容不能为空' });
+    }
+    const profile = await db.getUserProfile(req.user.email);
+    const user = await db.getUserByEmail(req.user.email);
+    const post = await db.createForumPost({
+      title: '📢 [公告] ' + cleanTitle,
+      content: cleanContent,
+      category: 'meta',
+      tags: ['公告'],
+      authorId: req.user.email,
+      authorName: (profile && profile.username) || (user && user.username) || '管理员',
+      authorLevel: 99
+    });
+    // 自动置顶
+    await db.updateForumPost(post.id, { isPinned: true });
+    res.status(201).json(post);
+  } catch (err) {
+    console.error('[Admin] Announcement error:', err);
+    res.status(500).json({ error: '服务器错误' });
+  }
+});
+
+// 获取所有用户列表（管理员）
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const d = await db.loadDb();
+    const users = Object.values(d.users).map(u => ({
+      email: u.email,
+      username: u.username,
+      role: u.role || 'user',
+      createdAt: u.createdAt
+    }));
+    res.json(users);
+  } catch (err) {
+    console.error('[Admin] Get users error:', err);
     res.status(500).json({ error: '服务器错误' });
   }
 });

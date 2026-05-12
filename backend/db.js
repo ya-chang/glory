@@ -569,6 +569,8 @@ async function searchAll(query) {
 }
 
 module.exports = {
+  // DB
+  loadDb,
   // User
   getUserByEmail,
   createUser,

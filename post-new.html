@@ -67,6 +67,8 @@
         <button class="toolbar-btn" onclick="insertFormat('\n- ', '')" title="列表">☰</button>
         <span class="toolbar-sep"></span>
         <button class="toolbar-btn" onclick="insertFormat('[', '](url)')" title="链接">🔗</button>
+        <button class="toolbar-btn" onclick="document.getElementById('imgUploadInput').click()" title="上传图片">🖼️</button>
+        <input type="file" id="imgUploadInput" accept="image/*" style="display:none" onchange="uploadPostImage(this)">
       </div>
       <textarea id="f_content" placeholder="写下你想说的..." rows="12" oninput="updateCharCount()"></textarea>
       <div class="char-count"><span id="contentCount">0</span> 字</div>
@@ -128,11 +130,14 @@
 <script src="common.js"></script>
 <script src="forum.js"></script>
 <script>
-  // 检查登录状态
+  // 检查登录状态 + 规则弹窗
   if (!getToken()) {
     alert('请先登录后再发帖');
     window.location.href = 'index.html';
   }
+
+  // 首次发帖显示规则弹窗
+  showRulesModal();
 
   let selectedCategory = '';
 
@@ -155,6 +160,17 @@
   if (preCat) {
     const target = document.querySelector(`.cat-select-card[data-id="${preCat}"]`);
     if (target) { target.click(); }
+  }
+
+  // 管理员发布公告模式
+  const isAnnounce = params.get('announce') === '1';
+  if (isAnnounce && isAdmin()) {
+    document.querySelector('h1').textContent = '📢 发布公告';
+    document.querySelector('.page-header p').textContent = '发布公告将自动置顶到站务中心';
+    document.title = '发布公告 · 荣耀社区';
+    // 预选站务中心
+    const metaCard = document.querySelector('.cat-select-card[data-id="meta"]');
+    if (metaCard) { metaCard.click(); metaCard.style.display = 'none'; }
   }
 
   const tags = [];
@@ -211,6 +227,30 @@
     textarea.selectionEnd = start + before.length + selected.length;
   }
 
+  // 上传图片到图床，插入到内容中
+  async function uploadPostImage(input) {
+    var file = input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { alert('图片过大，请选择 10MB 以内'); input.value = ''; return; }
+
+    showToast('正在上传图片...');
+    try {
+      var url = await compressAndUpload(file, 1200, 0.85);
+      var textarea = document.getElementById('f_content');
+      var imgMarkdown = '\n![图片](' + url + ')\n';
+      var pos = textarea.selectionStart;
+      textarea.value = textarea.value.substring(0, pos) + imgMarkdown + textarea.value.substring(pos);
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = pos + imgMarkdown.length;
+      updateCharCount();
+      showToast('图片上传成功 ✅', 'success');
+    } catch (e) {
+      alert('图片上传失败，请重试');
+    }
+    input.value = '';
+  }
+
   function updateCharCount() {
     document.getElementById('titleCount').textContent = document.getElementById('f_title').value.length;
     document.getElementById('contentCount').textContent = document.getElementById('f_content').value.length;
@@ -247,6 +287,15 @@
     btn.textContent = '发布中...';
 
     try {
+      // 管理员发布公告走专用API
+      if (isAnnounce && isAdmin() && selectedCategory === 'meta') {
+        var result = await apiPost('/api/admin/announcements', { title, content });
+        if (!result) throw new Error('发布失败');
+        alert('公告发布成功！');
+        window.location.href = `post-detail.html?id=${result.id}`;
+        return;
+      }
+
       const post = await createPost({
         title,
         content,

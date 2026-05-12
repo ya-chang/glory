@@ -93,6 +93,7 @@
 </div>
 
 <a href="post-new.html" class="btn-new-post" title="发新帖">+</a>
+<a href="post-new.html?cat=meta&announce=1" class="btn-new-post btn-announce" id="announceBtn" title="发布公告" style="display:none;bottom:90px;background:linear-gradient(135deg,#6a1b9a,#8e24aa);">📢</a>
 
 <footer class="footer">
   <p>🏆 荣耀社区 · 全职高手同人站</p>
@@ -103,6 +104,11 @@
 <script>
   async function init() {
     try {
+      // 管理员显示公告按钮
+      if (isAdmin()) {
+        document.getElementById('announceBtn').style.display = 'flex';
+      }
+
       // 并行加载数据
       const [postsResult, statsResult] = await Promise.all([
         apiGet('/api/forum/posts?pageSize=1000'),
@@ -185,11 +191,11 @@
         });
       }
 
-      // 渲染最近活跃帖子
+      // 渲染最近活跃帖子（置顶帖排最前）
       const recentContainer = document.getElementById('recentPosts');
-      const recentPosts = [...allPosts]
-        .sort((a, b) => new Date(b.lastReplyAt || b.createdAt) - new Date(a.lastReplyAt || a.createdAt))
-        .slice(0, 8);
+      const pinnedPosts = [...allPosts].filter(p => p.isPinned).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const normalPosts = [...allPosts].filter(p => !p.isPinned).sort((a, b) => new Date(b.lastReplyAt || b.createdAt) - new Date(a.lastReplyAt || a.createdAt));
+      const recentPosts = [...pinnedPosts, ...normalPosts].slice(0, 8);
 
       if (recentPosts.length === 0) {
         recentContainer.innerHTML = '<p style="color:var(--text-3);padding:20px 0;">暂无帖子</p>';
