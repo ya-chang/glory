@@ -136,17 +136,31 @@
   var pendingAvatar = null;  // null=未修改, ''=已清除, 'url'=新上传
   var existingAvatar = '';
 
-  // 立即从缓存填充用户名，避免空白闪烁
-  var cachedUser = getUser();
-  if (cachedUser && cachedUser.username) {
-    document.getElementById('s_name').value = cachedUser.username;
-  }
+  // 立即从缓存填充所有字段，不等 API
+  (function fillFromCache() {
+    var cached = getUser();
+    if (!cached) return;
+    if (cached.username) document.getElementById('s_name').value = cached.username;
+    if (cached.bio) document.getElementById('s_bio').value = cached.bio;
+    if (cached.avatar) {
+      existingAvatar = cached.avatar;
+      document.querySelector('#avatarPreview img').src = cached.avatar;
+      document.getElementById('avatarPreview').style.display = 'block';
+    }
+  })();
 
-  // 加载用户资料
+  // API 返回后用真实数据覆盖
   async function loadSettings() {
     try {
       var profile = await apiGet('/api/profile');
       if (!profile) return;
+      // 更新 localStorage 缓存
+      var cached = getUser() || {};
+      cached.username = profile.username || cached.username;
+      cached.bio = profile.bio || cached.bio;
+      cached.avatar = profile.avatar || cached.avatar;
+      localStorage.setItem('glory_user', JSON.stringify(cached));
+
       if (profile.username) document.getElementById('s_name').value = profile.username;
       if (profile.bio) document.getElementById('s_bio').value = profile.bio;
       if (profile.favPlayer) document.getElementById('s_favPlayer').value = profile.favPlayer;
@@ -156,7 +170,10 @@
         document.querySelector('#avatarPreview img').src = profile.avatar;
         document.getElementById('avatarPreview').style.display = 'block';
       }
-    } catch(e) { console.error('loadSettings error:', e); }
+    } catch(e) {
+      console.error('loadSettings error:', e);
+      // API 失败时缓存数据已经填过了，用户不会看到空白
+    }
   }
 
   function previewAvatar(input) {

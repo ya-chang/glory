@@ -5,20 +5,10 @@ const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
 
 /* ===== 页面过渡 ===== */
 (function() {
-  // 页面加载完成后显示
-  function showPage() {
-    document.documentElement.classList.add('loaded');
-    document.documentElement.classList.remove('leaving');
-  }
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    requestAnimationFrame(showPage);
-  } else {
-    document.addEventListener('DOMContentLoaded', function() { requestAnimationFrame(showPage); });
-  }
-  // 页面离开时淡出
+  // 页面离开时轻微淡出（不隐藏页面本身，避免表单值不显示）
   window.addEventListener('beforeunload', function() {
-    document.documentElement.classList.add('leaving');
-    document.documentElement.classList.remove('loaded');
+    document.body.style.opacity = '0.6';
+    document.body.style.transition = 'opacity 0.1s ease';
   });
 })();
 
