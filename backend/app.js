@@ -500,10 +500,11 @@ app.get('/api/forum/posts', async (req, res) => {
       const result = await db.getPostsByCategory(category, { sort, page: parseInt(page), pageSize: parseInt(pageSize) });
       return res.json(result);
     }
-    // 按作者筛选
+    // 按作者筛选（忽略大小写）
     if (author) {
+      const authorLower = author.toLowerCase();
       const allPosts = await db.getForumPosts();
-      let posts = allPosts.filter(p => p.authorId === author);
+      let posts = allPosts.filter(p => p.authorId && p.authorId.toLowerCase() === authorLower);
       posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       const total = posts.length;
       const start = (parseInt(page) - 1) * parseInt(pageSize);
@@ -590,7 +591,7 @@ app.put('/api/forum/posts/:id', requireAuth, async (req, res) => {
   try {
     const post = await db.getForumPostById(req.params.id);
     if (!post) return res.status(404).json({ error: '帖子不存在' });
-    if (post.authorId !== req.user.email) {
+    if (!post.authorId || post.authorId.toLowerCase() !== req.user.email.toLowerCase()) {
       return res.status(403).json({ error: '只能编辑自己的帖子' });
     }
     const updates = {};
@@ -610,9 +611,13 @@ app.delete('/api/forum/posts/:id', requireAuth, async (req, res) => {
   try {
     const post = await db.getForumPostById(req.params.id);
     if (!post) return res.status(404).json({ error: '帖子不存在' });
-    const user = await db.getUserByEmail(req.user.email);
-    if (post.authorId !== req.user.email && (!user || user.role !== 'admin')) {
-      return res.status(403).json({ error: '只能删除自己的帖子' });
+    const userEmail = req.user.email.toLowerCase();
+    const isOwner = post.authorId && post.authorId.toLowerCase() === userEmail;
+    if (!isOwner) {
+      const user = await db.getUserByEmail(userEmail);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: '只能删除自己的帖子' });
+      }
     }
     await db.deleteForumPost(req.params.id);
     res.json({ message: '帖子已删除' });
@@ -694,9 +699,13 @@ app.delete('/api/forum/replies/:id', requireAuth, async (req, res) => {
   try {
     const reply = await db.getReplyById(req.params.id);
     if (!reply) return res.status(404).json({ error: '回复不存在' });
-    const user = await db.getUserByEmail(req.user.email);
-    if (reply.authorId !== req.user.email && (!user || user.role !== 'admin')) {
-      return res.status(403).json({ error: '只能删除自己的回复' });
+    const userEmail = req.user.email.toLowerCase();
+    const isOwner = reply.authorId && reply.authorId.toLowerCase() === userEmail;
+    if (!isOwner) {
+      const user = await db.getUserByEmail(userEmail);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: '只能删除自己的回复' });
+      }
     }
     await db.deleteForumReply(req.params.id);
     res.json({ message: '回复已删除' });
