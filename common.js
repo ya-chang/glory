@@ -269,45 +269,6 @@ function userLinkHtml(authorId, authorName) {
 
 /* ===== 公共渲染函数（重构提取） ===== */
 
-function renderPostCard(post, options) {
-  options = options || {};
-  var compact = options.compact;
-  var showExcerpt = options.showExcerpt !== false;
-  var cat = getCategoryById(post.category);
-  var catName = cat ? cat.name : '未知';
-  var catIcon = cat ? cat.icon : '📁';
-  var isHot = (post.likeCount + post.replyCount) > 20;
-  var excerpt = post.content.length > 120 ? post.content.substring(0, 120) + '...' : post.content;
-  
-  var item = document.createElement('a');
-  item.className = 'post-item' + (post.isPinned ? ' pinned' : '') + (post.isLocked ? ' locked' : '') + (compact ? ' compact' : '');
-  item.href = 'post-detail.html?id=' + post.id;
-  
-  var html = '<div class="post-avatar' + (isHot ? ' hot' : '') + '">' + post.authorName[0] + '</div>';
-  html += '<div class="post-body">';
-  html += '<div class="post-title">';
-  if (post.isPinned) html += '<span class="pin-icon">📌</span>';
-  if (post.isLocked) html += '<span class="lock-icon">🔒</span>';
-  if (isHot) html += '<span class="hot-icon">🔥</span>';
-  html += escapeForumHtml(post.title);
-  html += '</div>';
-  if (showExcerpt) {
-    html += '<div class="post-excerpt">' + escapeForumHtml(excerpt) + '</div>';
-  }
-  html += '<div class="post-meta">';
-  html += '<span class="author">' + userLinkHtml(post.authorId, post.authorName) + '</span>';
-  html += '<span class="user-badge' + (post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : '') + '">Lv.' + post.authorLevel + '</span>';
-  html += '<span>' + catIcon + ' ' + catName + '</span>';
-  html += '<span class="stat">💬 ' + post.replyCount + '</span>';
-  html += '<span class="stat">👍 ' + post.likeCount + '</span>';
-  if (!compact) html += '<span>👁️ ' + post.viewCount + '</span>';
-  html += '<span>' + forumTimeAgo(post.lastReplyAt || post.createdAt) + '</span>';
-  html += '</div></div>';
-  
-  item.innerHTML = html;
-  return item;
-}
-
 function renderOCCard(oc) {
   var card = document.createElement('a');
   card.className = 'oc-card';
@@ -329,10 +290,6 @@ function renderOCCard(oc) {
   return card;
 }
 
-function handleApiError(containerId, retryFn) {
-  showErrorState(containerId, '加载失败', retryFn);
-}
-
 function formatPostContent(text) {
   if (!text) return '';
   var html = escapeForumHtml(text);
@@ -344,23 +301,6 @@ function formatPostContent(text) {
   html = html.replace(/<br><blockquote/g, '<blockquote');
   html = html.replace(/<\/blockquote><br/g, '</blockquote');
   return html;
-}
-
-/* ===== 导航栏生成 ===== */
-function renderNav(activePage) {
-  var pages = [
-    { href: 'community.html', label: '首页', id: 'home' },
-    { href: 'players.html', label: '选手百科', id: 'players' },
-    { href: 'teams.html', label: '战队阵容', id: 'teams' },
-    { href: 'forum-home.html', label: '讨论区', id: 'forum' },
-    { href: 'oc-home.html', label: 'OC中心', id: 'oc' }
-  ];
-  var navHtml = '';
-  pages.forEach(function(p) {
-    navHtml += '<a href="' + p.href + '" class="' + (p.id === activePage ? 'active' : '') + '">' + p.label + '</a>';
-  });
-  var topbar = document.querySelector('.topbar-nav');
-  if (topbar) topbar.innerHTML = navHtml;
 }
 
 /* ===== 管理员工具 ===== */

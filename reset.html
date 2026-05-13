@@ -6,38 +6,7 @@
 <title>重置密码 - 荣耀社区</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
-  * { margin:0; padding:0; box-sizing:border-box; }
-  :root { --gold-mid:#c8a030; --red-bright:#c0392b; --bg-dark:#0a0608; --bg-card:rgba(18,8,8,0.85); }
-  html,body { width:100%; height:100%; overflow-x:hidden; font-family:'Noto Serif SC',serif; background:var(--bg-dark); }
-  .bg { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(100,20,15,0.12) 0%,transparent 60%),radial-gradient(ellipse 100% 100% at 50% 50%,#0a0608 0%,#050204 100%); }
-  .scene { position:relative; z-index:10; width:100%; min-height:100%; display:flex; align-items:center; justify-content:center; padding:30px 20px; }
-  .wrapper { max-width:420px; width:100%; animation:fadeIn 1s ease-out; }
-  @keyframes fadeIn { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
-  .card { padding:32px; background:var(--bg-card); border:1px solid rgba(140,80,30,0.12); border-radius:6px; backdrop-filter:blur(12px); }
-  .card::after { content:''; position:absolute; top:0; left:10%; right:10%; height:1px; background:linear-gradient(90deg,transparent,var(--red-bright),var(--gold-mid),var(--red-bright),transparent); opacity:0.5; }
-  .card { position:relative; overflow:hidden; }
-  h1 { text-align:center; font-size:18px; letter-spacing:6px; color:rgba(220,180,100,0.7); margin-bottom:24px; }
-  .field { margin-bottom:16px; }
-  .field label { display:block; font-size:12px; letter-spacing:3px; color:rgba(220,180,100,0.6); margin-bottom:7px; }
-  .field input { width:100%; height:46px; padding:0 16px; font-size:14px; font-family:inherit; color:#f0d888; background:rgba(10,5,5,0.7); border:1px solid rgba(140,80,30,0.2); border-radius:4px; outline:none; transition:all 0.3s; }
-  .field input:focus { border-color:rgba(200,100,40,0.45); background:rgba(15,8,8,0.85); }
-  .btn { width:100%; height:50px; margin-top:8px; font-family:inherit; font-size:15px; font-weight:700; letter-spacing:8px; color:#1a0800; background:linear-gradient(180deg,#d44020,#a02818,#7a1a10); border:1px solid rgba(200,80,40,0.35); border-radius:4px; cursor:pointer; transition:all 0.3s; text-shadow:0 1px 2px rgba(255,120,60,0.3); }
-  .btn:hover { box-shadow:0 0 30px rgba(200,60,30,0.25); transform:translateY(-1px); }
-  .btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
-  .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(26,8,0,0.3); border-top-color:#1a0800; border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; vertical-align:middle; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .toast { position:fixed; top:30px; left:50%; transform:translateX(-50%) translateY(-20px); padding:12px 28px; font-size:13px; letter-spacing:2px; border-radius:4px; z-index:100; opacity:0; transition:all 0.4s; pointer-events:none; }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-  .toast.error { background:rgba(180,40,30,0.9); border:1px solid rgba(200,60,40,0.5); color:#f0d888; }
-  .toast.success { background:rgba(40,120,60,0.9); border:1px solid rgba(52,168,83,0.5); color:#d8f0d8; }
-  .result { display:none; text-align:center; padding:20px 0; }
-  .result.show { display:block; }
-  .result h2 { font-size:20px; letter-spacing:4px; margin-bottom:12px; }
-  .result p { color:rgba(200,160,80,0.5); font-size:13px; line-height:1.8; }
-  .result a { display:inline-block; margin-top:20px; padding:12px 32px; background:linear-gradient(180deg,#d44020,#a02818); color:#1a0800; text-decoration:none; border-radius:4px; font-weight:700; letter-spacing:4px; }
-</style>
+<link rel="stylesheet" href="auth.css">
 </head>
 <body>
 <div class="bg"></div>
@@ -70,17 +39,9 @@
     </div>
   </div>
 </div>
+<script src="auth.js"></script>
 <script>
-  const API_BASE = 'https://glory-api-feqlkejziv.cn-hangzhou.fcapp.run';
   const token = new URLSearchParams(window.location.search).get('token');
-
-  function showToast(msg,type) {
-    const t=document.getElementById('toast');
-    t.textContent=msg; t.className='toast '+type;
-    requestAnimationFrame(()=>t.classList.add('show'));
-    clearTimeout(t._timer);
-    t._timer=setTimeout(()=>t.classList.remove('show'),3500);
-  }
 
   async function doReset() {
     const pwd = document.getElementById('new-pwd').value;
