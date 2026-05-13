@@ -34,7 +34,6 @@
       var hotPosts = results[1];
       if (stats) {
         document.getElementById('statPosts').textContent = stats.postCount || 0;
-        document.getElementById('statUsers').textContent = stats.userCount || 0;
         document.getElementById('statOCs').textContent = stats.ocCount || 0;
       }
       if (hotPosts && hotPosts.length > 0) {

@@ -76,7 +76,6 @@
               '<div class="post-excerpt">' + escapeForumHtml(post.content.slice(0, 80)) + (post.content.length > 80 ? '...' : '') + '</div>' +
               '<div class="post-meta">' +
                 '<span class="author">' + userLinkHtml(post.authorId, post.authorName) + '</span>' +
-                '<span class="user-badge' + (post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : '') + '">Lv.' + post.authorLevel + '</span>' +
                 '<span>' + catIcon + ' ' + catName + '</span>' +
                 '<span class="stat">💬 ' + post.replyCount + '</span>' +
                 '<span class="stat highlight">👍 ' + post.likeCount + '</span>' +
@@ -112,7 +111,6 @@
               '</div>' +
               '<div class="post-meta">' +
                 '<span class="author">' + userLinkHtml(post.authorId, post.authorName) + '</span>' +
-                '<span class="user-badge' + (post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : '') + '">Lv.' + post.authorLevel + '</span>' +
                 '<span>' + catIcon + ' ' + catName + '</span>' +
                 '<span class="stat">💬 ' + post.replyCount + '</span>' +
                 '<span class="stat">👍 ' + post.likeCount + '</span>' +

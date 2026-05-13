@@ -30,6 +30,7 @@
       document.querySelector('#avatarPreview img').src = cached.avatar;
       document.getElementById('avatarPreview').style.display = 'block';
     }
+    if (cached.ocHidden) document.getElementById('s_ocHidden').checked = true;
   })();
 
   async function loadSettings() {
@@ -46,6 +47,7 @@
       if (profile.bio) document.getElementById('s_bio').value = profile.bio;
       if (profile.favPlayer) document.getElementById('s_favPlayer').value = profile.favPlayer;
       if (profile.favTeam) document.getElementById('s_favTeam').value = profile.favTeam;
+      if (profile.ocHidden) document.getElementById('s_ocHidden').checked = true;
       if (profile.avatar) {
         existingAvatar = profile.avatar;
         document.querySelector('#avatarPreview img').src = profile.avatar;
@@ -91,7 +93,8 @@
       avatar: avatarValue,
       bio: document.getElementById('s_bio').value.trim(),
       favPlayer: document.getElementById('s_favPlayer').value,
-      favTeam: document.getElementById('s_favTeam').value
+      favTeam: document.getElementById('s_favTeam').value,
+      ocHidden: document.getElementById('s_ocHidden').checked
     };
 
     try {

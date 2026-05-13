@@ -589,8 +589,7 @@ app.post('/api/forum/posts', requireAuth, async (req, res) => {
       category: sanitizeText(category, 50),
       tags: (tags || []).map(t => sanitizeText(t, 20)).filter(Boolean),
       authorId: req.user.email,
-      authorName: (profile && profile.username) || (user && user.username) || req.user.email,
-      authorLevel: 1
+      authorName: (profile && profile.username) || (user && user.username) || req.user.email
     });
 
     res.status(201).json(post);
@@ -702,8 +701,7 @@ app.post('/api/forum/posts/:id/replies', requireAuth, async (req, res) => {
       replyTo: replyTo ? sanitizeText(replyTo, 100) : null,
       mentionUser: mentionUser ? sanitizeText(mentionUser, 50) : null,
       authorId: req.user.email,
-      authorName: (profile && profile.username) || (user && user.username) || req.user.email,
-      authorLevel: 1
+      authorName: (profile && profile.username) || (user && user.username) || req.user.email
     });
 
     res.status(201).json(reply);
@@ -975,6 +973,7 @@ app.get('/api/profile/:email', async (req, res) => {
       favTeam: profile.favTeam,
       joinDate: profile.joinDate,
       exp: profile.exp,
+      ocHidden: profile.ocHidden || false,
       stats: {
         posts: myPosts.length,
         ocs: myOCs.length
@@ -1013,6 +1012,7 @@ app.put('/api/profile', requireAuth, async (req, res) => {
     if (bio !== undefined) updates.bio = sanitizeText(bio, 200);
     if (favPlayer !== undefined) updates.favPlayer = sanitizeText(favPlayer, 50);
     if (favTeam !== undefined) updates.favTeam = sanitizeText(favTeam, 50);
+    if (req.body.ocHidden !== undefined) updates.ocHidden = !!req.body.ocHidden;
 
     const profile = await db.updateUserProfile(req.user.email, updates);
 
@@ -1166,8 +1166,7 @@ app.post('/api/admin/announcements', requireAdmin, async (req, res) => {
       category: 'meta',
       tags: ['公告'],
       authorId: req.user.email,
-      authorName: (profile && profile.username) || (user && user.username) || '管理员',
-      authorLevel: 99
+      authorName: (profile && profile.username) || (user && user.username) || '管理员'
     });
     // 自动置顶
     await db.updateForumPost(post.id, { isPinned: true });

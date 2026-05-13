@@ -31,26 +31,6 @@
       document.getElementById('statPosts').textContent = (profile.stats && profile.stats.posts) || 0;
       document.getElementById('statOCs').textContent = (profile.stats && profile.stats.ocs) || 0;
 
-      if (profile.exp !== undefined) {
-        var LEVELS = [
-          { level: 1, name: '新手玩家', exp: 0 },
-          { level: 2, name: '网吧常客', exp: 100 },
-          { level: 3, name: '业余选手', exp: 300 },
-          { level: 4, name: '职业新人', exp: 600 },
-          { level: 5, name: '职业选手', exp: 1000 },
-          { level: 6, name: '明星选手', exp: 2000 },
-          { level: 7, name: '战队队长', exp: 3500 },
-          { level: 8, name: '联盟传奇', exp: 5000 },
-          { level: 9, name: '荣耀教科书', exp: 8000 },
-          { level: 10, name: '荣耀之神', exp: 12000 }
-        ];
-        var current = LEVELS[0];
-        for (var i = LEVELS.length - 1; i >= 0; i--) {
-          if (profile.exp >= LEVELS[i].exp) { current = LEVELS[i]; break; }
-        }
-        document.getElementById('userTitle').textContent = 'Lv.' + current.level + ' · ' + current.name;
-      }
-
       if (profile.bio) {
         document.getElementById('bioCard').style.display = '';
         document.getElementById('userBio').textContent = profile.bio;
@@ -65,7 +45,15 @@
       }
 
       loadUserPosts(targetEmail);
-      loadUserOCs(targetEmail);
+
+      // 根据用户设置决定是否显示 OC
+      if (profile.ocHidden) {
+        document.getElementById('userOCs').innerHTML = '<p style="color:var(--text-3);padding:20px 0;text-align:center;">该用户已隐藏 OC</p>';
+        // 隐藏 OC Tab
+        document.querySelectorAll('.profile-tab[data-tab="ocs"]').forEach(function(tab) { tab.style.display = 'none'; });
+      } else {
+        loadUserOCs(targetEmail);
+      }
     } catch (e) {
       console.error('loadUserProfile error:', e);
       document.getElementById('userName').textContent = '加载失败';

@@ -118,7 +118,6 @@
             '<div class="post-excerpt">' + escapeForumHtml(excerpt) + '</div>' +
             '<div class="post-meta">' +
               '<span class="author">' + userLinkHtml(post.authorId, post.authorName) + '</span>' +
-              '<span class="user-badge' + (post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : '') + '">Lv.' + post.authorLevel + '</span>' +
               '<span class="stat">💬 ' + post.replyCount + '</span>' +
               '<span class="stat">👍 ' + post.likeCount + '</span>' +
               '<span class="stat">👁️ ' + post.viewCount + '</span>' +

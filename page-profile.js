@@ -34,8 +34,25 @@
       if (isAdmin()) {
         document.getElementById('profileName').innerHTML = escapeForumHtml(profileData.username || '管理员') + ' <span style="background:#6a1b9a;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;">管理员</span>';
       }
-      document.getElementById('profileTitle').textContent = '社区成员';
       document.getElementById('profileJoinDate').textContent = profileData.joinDate || '2026-05-01';
+
+      // 个人简介
+      if (profileData.bio) {
+        document.getElementById('bioCard').style.display = '';
+        document.getElementById('myBio').textContent = profileData.bio;
+      }
+
+      // 偏好
+      var favItems = [];
+      if (profileData.favPlayer) favItems.push('🎮 最喜欢的角色：' + profileData.favPlayer);
+      if (profileData.favTeam) favItems.push('🏆 最喜欢的战队：' + profileData.favTeam);
+      if (favItems.length > 0) {
+        document.getElementById('favCard').style.display = '';
+        document.getElementById('myFav').innerHTML = favItems.join('<br>');
+      }
+
+      // OC 显示/隐藏状态
+      window._ocHidden = !!profileData.ocHidden;
 
       document.getElementById('statPosts').textContent = stats.posts;
       document.getElementById('statReplies').textContent = stats.replies;
@@ -118,8 +135,17 @@
         .sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
       var container = document.getElementById('myOCs');
 
+      // OC 公开/隐藏开关
+      var toggleHtml = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:12px 16px;background:var(--bg);border-radius:8px;">' +
+        '<span style="font-size:14px;color:var(--text-2);">对其他用户隐藏我的 OC</span>' +
+        '<label class="toggle-switch">' +
+          '<input type="checkbox" id="ocHiddenToggle" ' + (window._ocHidden ? 'checked' : '') + ' onchange="toggleOCHidden(this.checked)">' +
+          '<span class="toggle-slider"></span>' +
+        '</label>' +
+      '</div>';
+
       if (myOCs.length === 0) {
-        container.innerHTML = '<div class="empty-state">' +
+        container.innerHTML = toggleHtml + '<div class="empty-state">' +
           '<div style="font-size:36px;margin-bottom:12px;">🧑🎨</div>' +
           '<p>还没有创建 OC</p>' +
           '<a href="oc-create.html" class="btn btn-primary" style="margin-top:12px;">创建 OC</a>' +
@@ -127,7 +153,7 @@
         return;
       }
 
-      container.innerHTML = '<div class="oc-grid">' + myOCs.map(function(oc) {
+      container.innerHTML = toggleHtml + '<div class="oc-grid">' + myOCs.map(function(oc) {
         return '<a class="oc-card" href="oc-detail.html?id=' + oc.id + '">' +
           '<div class="oc-card-top"></div>' +
           '<div class="oc-card-body">' +
@@ -147,6 +173,19 @@
       document.getElementById('myOCs').innerHTML = '<p style="color:var(--text-3);padding:20px 0;">加载失败</p>';
     }
   }
+
+  window.toggleOCHidden = async function(hidden) {
+    try {
+      await apiPut('/api/profile', { ocHidden: hidden });
+      window._ocHidden = hidden;
+      showToast(hidden ? 'OC 已对其他用户隐藏' : 'OC 已公开', 'success');
+    } catch (e) {
+      showToast('设置失败，请重试', 'error');
+      // 回滚 checkbox 状态
+      var cb = document.getElementById('ocHiddenToggle');
+      if (cb) cb.checked = !hidden;
+    }
+  };
 
   document.querySelectorAll('.profile-tab').forEach(function(tab) {
     tab.onclick = function() {

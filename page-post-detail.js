@@ -92,7 +92,6 @@
             '<div class="post-author-avatar">' + post.authorName[0] + '</div>' +
             '<div class="post-author-meta">' +
               '<span class="author">' + userLinkHtml(post.authorId, post.authorName) + '</span>' +
-              '<span class="user-badge' + (post.authorLevel >= 8 ? ' gold' : post.authorLevel >= 5 ? '' : '') + '">Lv.' + post.authorLevel + '</span>' +
             '</div>' +
           '</div>' +
           '<div class="post-time-row">' +
@@ -151,7 +150,6 @@
               '<div class="reply-child-body">' +
                 '<div class="reply-header">' +
                   '<span class="author">' + userLinkHtml(cr.authorId, cr.authorName) + '</span>' +
-                  '<span class="user-badge' + (cr.authorLevel >= 8 ? ' gold' : cr.authorLevel >= 5 ? '' : '') + '">Lv.' + cr.authorLevel + '</span>' +
                   '<span class="reply-time">' + forumTimeAgo(cr.createdAt) + '</span>' +
                 '</div>' +
                 '<div class="reply-text">' + childMention + formatPostContent(cr.content) + '</div>' +
@@ -170,7 +168,6 @@
           '<div class="reply-body">' +
             '<div class="reply-header">' +
               '<span class="author">' + userLinkHtml(r.authorId, r.authorName) + '</span>' +
-              '<span class="user-badge' + (r.authorLevel >= 8 ? ' gold' : r.authorLevel >= 5 ? '' : '') + '">Lv.' + r.authorLevel + '</span>' +
               '<span class="reply-time">' + forumTimeAgo(r.createdAt) + '</span>' +
               '<span class="reply-floor">#' + (index + 1) + '</span>' +
             '</div>' +
