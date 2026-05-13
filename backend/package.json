@@ -7,8 +7,6 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@webserverless/fc-express": "^1.0.0",
-    "adm-zip": "^0.5.17",
     "ali-oss": "^6.20.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",

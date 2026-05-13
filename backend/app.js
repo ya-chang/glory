@@ -59,6 +59,15 @@ const email = require('./email');
 
 const app = express();
 
+// 启动日志
+console.log('[App] 荣耀社区后端启动中...');
+console.log('[App] NODE_ENV:', process.env.NODE_ENV || '(未设置)');
+console.log('[App] OSS_REGION:', process.env.OSS_REGION || '(未设置)');
+console.log('[App] OSS_BUCKET:', process.env.OSS_BUCKET_NAME || '(未设置)');
+console.log('[App] OSS_KEY_ID:', process.env.OSS_ACCESS_KEY_ID ? '***已配置***' : '(未设置)');
+console.log('[App] JWT_SECRET:', process.env.JWT_SECRET ? '***已配置***' : '(使用默认值)');
+console.log('[App] RESEND_KEY:', process.env.RESEND_API_KEY ? '***已配置***' : '(未设置)');
+
 // CORS - 允许 GitHub Pages 和本地开发
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'

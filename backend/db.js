@@ -12,14 +12,23 @@ const DB_FILE = 'glory-db.json';
 let client = null;
 let db = null;
 
-// 初始化 OSS 客户端
+// 初始化 OSS 客端
 function getClient() {
   if (!client) {
+    const region = process.env.OSS_REGION || 'oss-cn-hangzhou';
+    const accessKeyId = process.env.OSS_ACCESS_KEY_ID;
+    const accessKeySecret = process.env.OSS_ACCESS_KEY_SECRET;
+    const bucket = process.env.OSS_BUCKET_NAME;
+
+    if (!accessKeyId || !accessKeySecret || !bucket) {
+      console.error('[DB] ⚠️ OSS 环境变量未完整配置！REGION:', region, 'BUCKET:', bucket || '(未设置)');
+    }
+
     client = new OSS({
-      region: process.env.OSS_REGION || 'oss-cn-hangzhou',
-      accessKeyId: process.env.OSS_ACCESS_KEY_ID,
-      accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET,
-      bucket: process.env.OSS_BUCKET_NAME,
+      region: region,
+      accessKeyId: accessKeyId || 'placeholder',
+      accessKeySecret: accessKeySecret || 'placeholder',
+      bucket: bucket || 'placeholder',
     });
   }
   return client;
