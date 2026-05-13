@@ -26,9 +26,9 @@ const PLAYERS = [
     relationships:[{name:"叶修",desc:"曾经队友，后关系恶化"}],
     honors:[]
   },
-  { id:"sumu_cheng", name:"苏沐橙", gameId:"沐雨橙风", class:"枪炮师", team:"嘉世→兴欣", teamShort:"嘉世", status:"现役", birthday:"2月18日", height:"167cm", blood:"B型", weapon:"吞日", role:"队长（S11起）", debutSeason:4, avatar:"橙",
-    bio:"首席枪炮师，黄金一代成员。苏沐秋的妹妹，叶修最亲密的搭档。S10随兴欣夺冠，S11起担任兴欣队长。",
-    career:[{s:"S4-S9",d:"嘉世，与叶修搭档"},{s:"S10",d:"转会兴欣，夺冠",h:true},{s:"S11起",d:"兴欣队长"}],
+  { id:"sumu_cheng", name:"苏沐橙", gameId:"沐雨橙风", class:"枪炮师", team:"嘉世→兴欣", teamShort:"嘉世", status:"现役", birthday:"2月18日", height:"168cm", blood:"B型", weapon:"吞日", role:"队长（S11起）", debutSeason:3, avatar:"橙",
+    bio:"首席枪炮师，黄金一代成员。苏沐秋的妹妹，叶修最亲密的搭档。S3出道加入嘉世，S10随兴欣夺冠，S11起担任兴欣队长。",
+    career:[{s:"S3-S9",d:"嘉世，与叶修搭档"},{s:"S10",d:"转会兴欣，夺冠",h:true},{s:"S11起",d:"兴欣队长"}],
     relationships:[{name:"叶修",desc:"最亲密的搭档"},{name:"苏沐秋",desc:"已故哥哥"}],
     honors:["S10 总冠军","首席枪炮师","黄金一代"]
   },
@@ -40,7 +40,7 @@ const PLAYERS = [
   },
   // === 兴欣 ===
   { id:"fangrui", name:"方锐", gameId:"海无量（原鬼迷神疑）", class:"气功师（原盗贼）", team:"呼啸→兴欣", teamShort:"兴欣", status:"现役", birthday:"11月20日", height:"177cm", blood:"O型", weapon:"镜月", role:"副队长", debutSeason:5, avatar:"锐",
-    bio:"蓝雨训练营出身，呼啸副队长（S5-S9），S10转会兴欣。黄金右手、猥琐大师，操作风格独特。",
+    bio:"蓝雨训练营出身，呼啸副队长（S5-S9），S10转会兴欣改打气功师。黄金右手、猥琐大师，操作风格独特，是兴欣的奇兵。",
     career:[{s:"S5-S9",d:"呼啸副队长"},{s:"S10",d:"转会兴欣，夺冠",h:true}],
     relationships:[{name:"叶修",desc:"队友"},{name:"林敬言",desc:"呼啸前队友"}],
     honors:["S10 总冠军","黄金右手","猥琐大师"]
@@ -82,9 +82,9 @@ const PLAYERS = [
     honors:["S10 总冠军"]
   },
   { id:"weichen", name:"魏琛", gameId:"迎风布阵（原索克萨尔）", class:"术士", team:"蓝雨→兴欣", teamShort:"兴欣", status:"退役", birthday:"9月28日", height:"175cm", blood:"AB型", weapon:"死亡之手", role:"队长（蓝雨初代）", debutSeason:1, avatar:"魏",
-    bio:"蓝雨首任队长（S1-S2），后退役。S10复出加入兴欣，夺冠后转为公会成员。",
+    bio:"蓝雨首任队长（S1-S2），后退役。S10复出加入兴欣，夺冠后转为公会成员。虽然年纪大、操作下滑，但经验丰富，是兴欣的「老大哥」。与喻文州是蓝雨两代术士传人。",
     career:[{s:"S1-S2",d:"蓝雨首任队长"},{s:"S10",d:"复出加入兴欣，夺冠",h:true}],
-    relationships:[{name:"喻文州",desc:"蓝雨后辈"},{name:"叶修",desc:"兴欣队长"}],
+    relationships:[{name:"喻文州",desc:"蓝雨后辈/两代术士传人"},{name:"叶修",desc:"兴欣队长"},{name:"黄少天",desc:"蓝雨后辈"}],
     honors:["S10 总冠军","蓝雨首任队长"]
   },
   // === 蓝雨 ===
@@ -138,7 +138,7 @@ const PLAYERS = [
     honors:["第一骑士","磨王"]
   },
   // === 霸图 ===
-  { id:"hanwenqing", name:"韩文清", gameId:"大漠孤烟", class:"拳法家", team:"霸图", teamShort:"霸图", status:"现役", birthday:"3月31日", height:"181cm", blood:"A型", weapon:"烈焰红拳", role:"队长", debutSeason:1, avatar:"韩",
+  { id:"hanwenqing", name:"韩文清", gameId:"大漠孤烟", class:"拳法家", team:"霸图", teamShort:"霸图", status:"现役", birthday:"3月31日", height:"183cm", blood:"A型", weapon:"烈焰红拳", role:"队长", debutSeason:1, avatar:"韩",
     bio:"拳皇，经历全部十个赛季的老将。S4获MVP并带队夺冠。打法刚猛，与叶修是十年老对手。",
     career:[{s:"S1-S3",d:"霸图核心"},{s:"S4",d:"霸图夺冠，获MVP",h:true},{s:"S5-S10",d:"霸图队长，老将坚守"}],
     relationships:[{name:"叶修",desc:"十年老对手"},{name:"张新杰",desc:"副队长，最佳搭档"},{name:"林敬言",desc:"队友"}],
@@ -163,7 +163,7 @@ const PLAYERS = [
     honors:["前第一流氓"]
   },
   // === 轮回 ===
-  { id:"zhouzekai", name:"周泽楷", gameId:"一枪穿云", class:"神枪手", team:"轮回", teamShort:"轮回", status:"现役", birthday:"11月24日", height:"181cm", blood:"A型", weapon:"碎霜+荒火", role:"队长", debutSeason:5, avatar:"周",
+  { id:"zhouzekai", name:"周泽楷", gameId:"一枪穿云", class:"神枪手", team:"轮回", teamShort:"轮回", status:"现役", birthday:"11月24日", height:"183cm", blood:"A型", weapon:"碎霜+荒火", role:"队长", debutSeason:5, avatar:"周",
     bio:"枪王，荣耀联盟第一大帅哥。继叶修之后的第二位「荣耀第一人」。S5出道获最佳新人，S8/S9带队夺冠并获MVP。性格内向话少，但场上实力碾压一切。",
     career:[{s:"S5",d:"轮回出道，最佳新人",h:true},{s:"S8",d:"轮回夺冠，获MVP",h:true},{s:"S9",d:"轮回卫冕，获MVP",h:true},{s:"S10",d:"轮回亚军"}],
     relationships:[{name:"江波涛",desc:"副队长，替他说话的人"},{name:"孙翔",desc:"S10转入队友"}],

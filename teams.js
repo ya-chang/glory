@@ -6,8 +6,8 @@ const TEAM_ROSTERS = {
     seasons: {
       1: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"吴雪峰",role:"气功师",note:"副队长"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"},{name:"苏沐秋",role:"枪系全精通",note:"千机伞创造者/签约当天去世"}],
       2: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"吴雪峰",role:"气功师",note:"副队长"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
-      3: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"吴雪峰",role:"气功师",note:"副队长/S3后退役"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
-      4: [{name:"叶修",role:"战斗法师",note:"队长/夺冠"},{name:"苏沐橙",role:"枪炮师",note:"出道/冠军"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
+      3: [{name:"叶修",role:"战斗法师",note:"队长/夺冠"},{name:"苏沐橙",role:"枪炮师",note:"出道/冠军"},{name:"吴雪峰",role:"气功师",note:"副队长/S3后退役"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
+      4: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"苏沐橙",role:"枪炮师"},{name:"夏茗",role:"神枪手"},{name:"殷雄",role:"牧师"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
       5: [{name:"叶修",role:"战斗法师",note:"队长/夺冠"},{name:"苏沐橙",role:"枪炮师",note:"冠军"},{name:"刘皓",role:"魔剑士",note:"出道"},{name:"秦天然",role:"元素法师"},{name:"薛明凯",role:"魔剑士"}],
       6: [{name:"叶修",role:"战斗法师",note:"队长/夺冠"},{name:"苏沐橙",role:"枪炮师",note:"冠军"},{name:"刘皓",role:"魔剑士"},{name:"贺铭",role:"元素法师",note:"出道"},{name:"薛明凯",role:"魔剑士"}],
       7: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"苏沐橙",role:"枪炮师"},{name:"刘皓",role:"魔剑士",note:"副队长"},{name:"贺铭",role:"元素法师"},{name:"薛明凯",role:"魔剑士"},{name:"王泽",role:"神枪手",note:"出道"},{name:"孙翔",role:"狂剑士",note:"冬季从越云转入"}],
