@@ -22,6 +22,16 @@ jobs:
       - name: Install Serverless Devs
         run: npm install -g @serverless-devs/s
 
+      - name: Inject secrets into s.yaml
+        run: |
+          sed -i \
+            -e 's|__OSS_BUCKET_NAME__|${{ secrets.OSS_BUCKET_NAME }}|g' \
+            -e 's|__OSS_ACCESS_KEY_ID__|${{ secrets.OSS_ACCESS_KEY_ID }}|g' \
+            -e 's|__OSS_ACCESS_KEY_SECRET__|${{ secrets.OSS_ACCESS_KEY_SECRET }}|g' \
+            -e 's|__JWT_SECRET__|${{ secrets.JWT_SECRET }}|g' \
+            -e 's|__RESEND_API_KEY__|${{ secrets.RESEND_API_KEY }}|g' \
+            s.yaml
+
       - name: Configure credentials
         run: |
           s config add -a default \

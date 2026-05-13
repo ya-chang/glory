@@ -15,3 +15,14 @@ resources:
       cpu: 0.35
       diskSize: 512
       code: ./backend
+      environmentVariables:
+        NODE_ENV: production
+        OSS_REGION: oss-cn-hangzhou
+        OSS_BUCKET_NAME: __OSS_BUCKET_NAME__
+        OSS_ACCESS_KEY_ID: __OSS_ACCESS_KEY_ID__
+        OSS_ACCESS_KEY_SECRET: __OSS_ACCESS_KEY_SECRET__
+        JWT_SECRET: __JWT_SECRET__
+        RESEND_API_KEY: __RESEND_API_KEY__
+        SITE_URL: https://ya-chang.github.io/glory
+        FROM_EMAIL: onboarding@resend.dev
+        FROM_NAME: 荣耀社区
