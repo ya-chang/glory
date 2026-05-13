@@ -921,6 +921,15 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   try {
     const { username, avatar, bio, favPlayer, favTeam } = req.body;
     const updates = {};
+
+    // 处理签到经验增加
+    if (req.body.expAdd !== undefined) {
+      const addAmount = parseInt(req.body.expAdd);
+      if (!isNaN(addAmount) && addAmount > 0 && addAmount <= 100) {
+        const currentProfile = await db.getUserProfile(req.user.email);
+        updates.exp = ((currentProfile && currentProfile.exp) || 0) + addAmount;
+      }
+    }
     if (username !== undefined) updates.username = sanitizeUsername(username);
     if (avatar !== undefined) {
       // 只允许 base64 图片或合法 URL，或空字符串（清除头像）
