@@ -13,7 +13,7 @@ const TEAM_ROSTERS = {
       7: [{name:"叶修",role:"战斗法师",note:"队长"},{name:"苏沐橙",role:"枪炮师"},{name:"刘皓",role:"魔剑士",note:"副队长"},{name:"贺铭",role:"元素法师"},{name:"薛明凯",role:"魔剑士"},{name:"王泽",role:"神枪手",note:"出道"},{name:"孙翔",role:"狂剑士",note:"冬季从越云转入"}],
       8: [{name:"孙翔",role:"战斗法师",note:"接替叶修"},{name:"苏沐橙",role:"枪炮师"},{name:"刘皓",role:"魔剑士",note:"副队长"},{name:"贺铭",role:"元素法师"},{name:"邱非",role:"战斗法师",note:"出道"},{name:"王泽",role:"神枪手"},{name:"申建",role:"拳法家"},{name:"郭阳",role:"气功师"}],
       9: [{name:"孙翔",role:"战斗法师"},{name:"邱非",role:"战斗法师"},{name:"郭阳",role:"气功师"},{name:"张家兴",role:"牧师"}],
-      10: [{name:"邱非",role:"战斗法师",note:"新嘉世队长"},{name:"闻理",role:"—",note:"新嘉世/原训练营"}]
+      10: [{name:"邱非",role:"战斗法师",note:"新嘉世队长"},{name:"孙翔",role:"战斗法师",note:"S10转会轮回"},{name:"肖时钦",role:"机械师",note:"重回雷霆"},{name:"闻理",role:"—",note:"新嘉世/原训练营"}]
     }
   },
   "兴欣": {
@@ -51,7 +51,7 @@ const TEAM_ROSTERS = {
       7: [{name:"王杰希",role:"魔道学者",note:"队长/夺冠/MVP"},{name:"方士谦",role:"牧师",note:"副队长/冠军"},{name:"邓复升",role:"骑士",note:"冠军"},{name:"许斌",role:"骑士"},{name:"刘小别",role:"剑客",note:"出道/冠军"},{name:"袁柏清",role:"牧师",note:"出道"},{name:"柳非",role:"神枪手"},{name:"周烨柏",role:"鬼剑士"}],
       8: [{name:"王杰希",role:"魔道学者",note:"队长"},{name:"邓复升",role:"骑士",note:"副队长/S8后退役"},{name:"许斌",role:"骑士"},{name:"刘小别",role:"剑客"},{name:"袁柏清",role:"牧师"},{name:"高英杰",role:"魔道学者",note:"出道"},{name:"柳非",role:"神枪手"},{name:"周烨柏",role:"鬼剑士"},{name:"肖云",role:"—",note:"出道"}],
       9: [{name:"王杰希",role:"魔道学者",note:"队长"},{name:"许斌",role:"骑士",note:"副队长"},{name:"刘小别",role:"剑客"},{name:"袁柏清",role:"牧师"},{name:"高英杰",role:"魔道学者"},{name:"柳非",role:"神枪手"},{name:"周烨柏",role:"鬼剑士"},{name:"肖云",role:"—"}],
-      10: [{name:"王杰希",role:"魔道学者",note:"队长"},{name:"许斌",role:"骑士",note:"副队长"},{name:"刘小别",role:"剑客"},{name:"袁柏清",role:"牧师"},{name:"高英杰",role:"魔道学者"},{name:"柳非",role:"神枪手"},{name:"周烨柏",role:"鬼剑士"},{name:"肖云",role:"—"},{name:"李济",role:"神枪手"}]
+      10: [{name:"王杰希",role:"魔道学者",note:"队长"},{name:"许斌",role:"骑士",note:"副队长"},{name:"刘小别",role:"剑客"},{name:"袁柏清",role:"牧师"},{name:"高英杰",role:"魔道学者"},{name:"梁方",role:"狂剑士"},{name:"柳非",role:"神枪手"},{name:"周烨柏",role:"鬼剑士"},{name:"肖云",role:"—"},{name:"李济",role:"神枪手"}]
     }
   },
   "霸图": {
