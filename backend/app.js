@@ -743,6 +743,67 @@ app.post('/api/forum/replies/:id/like', requireAuth, async (req, res) => {
   }
 });
 
+// ============ 图片上传（代理转发到 freeimage.host） ============
+app.post('/api/upload-image', requireAuth, async (req, res) => {
+  try {
+    const { base64, filename } = req.body;
+    if (!base64 || typeof base64 !== 'string') {
+      return res.status(400).json({ error: '缺少图片数据' });
+    }
+    // base64 可以是 data:image/xxx;base64,... 或纯 base64
+    let mimeType = 'image/jpeg';
+    let rawBase64 = base64;
+    const dataUrlMatch = base64.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (dataUrlMatch) {
+      mimeType = dataUrlMatch[1];
+      rawBase64 = dataUrlMatch[2];
+    }
+
+    // 限制大小（base64 编码后约比原始大 33%，10MB 原始 ≈ 13MB base64）
+    if (rawBase64.length > 14 * 1024 * 1024) {
+      return res.status(400).json({ error: '图片过大，请压缩后重试' });
+    }
+
+    // Rate limit
+    const ip = req.ip || req.connection.remoteAddress;
+    if (!rateLimit(`upload:${ip}`, 20, 60000)) {
+      return res.status(429).json({ error: '上传过于频繁，请稍后再试' });
+    }
+
+    // base64 转 Buffer
+    const buffer = Buffer.from(rawBase64, 'base64');
+    const ext = mimeType.split('/')[1] || 'jpeg';
+    const fname = (filename || 'image') + '.' + ext;
+
+    // 构造 FormData 发送到 freeimage.host
+    const blob = new Blob([buffer], { type: mimeType });
+    const formData = new FormData();
+    formData.append('source', blob, fname);
+
+    const apiKey = '6d207e02198a847aa98d0a2a901485a5';
+    const resp = await fetch(`https://freeimage.host/api/1/upload?key=${apiKey}`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!resp.ok) {
+      console.error('[Upload] freeimage.host HTTP error:', resp.status);
+      return res.status(502).json({ error: '图片上传服务异常' });
+    }
+
+    const data = await resp.json();
+    if (!data.image || !data.image.url) {
+      console.error('[Upload] freeimage.host response:', JSON.stringify(data));
+      return res.status(502).json({ error: '图片上传失败' });
+    }
+
+    res.json({ url: data.image.url });
+  } catch (err) {
+    console.error('[Upload] error:', err);
+    res.status(500).json({ error: '图片上传失败' });
+  }
+});
+
 // ============ OC 角色 ============
 
 // 获取 OC 列表

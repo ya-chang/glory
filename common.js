@@ -176,17 +176,25 @@ function showToast(msg, type) {
   setTimeout(function() { toast.classList.remove('show'); setTimeout(function() { toast.remove(); }, 300); }, 2500);
 }
 
-/* ===== 图片上传到图床 ===== */
+/* ===== 图片上传（通过后端代理转发到图床） ===== */
 async function uploadToImgHost(file) {
-  var formData = new FormData();
-  formData.append('source', file);
-  var res = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
-    method: 'POST', body: formData
+  // 将文件转为 base64
+  var base64 = await new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  // 通过后端上传（绕过浏览器 CORS 限制）
+  var res = await fetchWithRetry(API_BASE + '/api/upload-image', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ base64: base64, filename: file.name || 'image' })
   });
   if (!res.ok) throw new Error('图片上传失败');
   var data = await res.json();
-  if (!data.image || !data.image.url) throw new Error('图片上传失败');
-  return data.image.url;
+  if (!data.url) throw new Error('图片上传失败');
+  return data.url;
 }
 
 /* 压缩图片后上传到图床，返回 URL */

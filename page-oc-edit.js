@@ -60,10 +60,12 @@
     document.getElementById('f_bio').value = oc.bio;
 
     if (oc.avatar) {
+      uploadedAvatar = oc.avatar;
       document.querySelector('#avatarPreview img').src = oc.avatar;
       document.getElementById('avatarPreview').style.display = 'block';
     }
     if (oc.illustration) {
+      uploadedIllustration = oc.illustration;
       document.querySelector('#illustPreview img').src = oc.illustration;
       document.getElementById('illustPreview').style.display = 'block';
     }
@@ -150,27 +152,45 @@
     container.appendChild(row);
   };
 
+  // 存储已上传的图片 URL
+  var uploadedAvatar = '';
+  var uploadedIllustration = '';
+
   window.previewFile = function(input, previewId) {
     var preview = document.getElementById(previewId);
     var file = input.files[0];
     if (!file) { preview.style.display = 'none'; return; }
+    if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
+    if (file.size > 10 * 1024 * 1024) { alert('图片过大，请选择 10MB 以内'); input.value = ''; return; }
+    // 先显示本地预览
     var reader = new FileReader();
     reader.onload = function(e) {
       preview.querySelector('img').src = e.target.result;
       preview.style.display = 'block';
     };
     reader.readAsDataURL(file);
+    // 上传到图床
+    var isAvatar = previewId === 'avatarPreview';
+    showToast('正在上传图片...');
+    compressAndUpload(file, 800, 0.8).then(function(url) {
+      if (isAvatar) uploadedAvatar = url;
+      else uploadedIllustration = url;
+      preview.querySelector('img').src = url;
+      showToast('图片上传成功 ✅', 'success');
+    }).catch(function() {
+      alert('图片上传失败，请重试');
+      preview.style.display = 'none';
+      input.value = '';
+    });
   };
 
   window.saveOC = async function() {
     if (!validateStep(2)) return;
-    var avatarPreview = document.querySelector('#avatarPreview img');
-    var illustPreview = document.querySelector('#illustPreview img');
     var data = {
       name: document.getElementById('f_name').value.trim(),
       gameId: document.getElementById('f_gameId').value.trim(),
-      avatar: (avatarPreview && avatarPreview.src && document.getElementById('avatarPreview').style.display !== 'none') ? avatarPreview.src : oc.avatar,
-      illustration: (illustPreview && illustPreview.src && document.getElementById('illustPreview').style.display !== 'none') ? illustPreview.src : oc.illustration,
+      avatar: uploadedAvatar || oc.avatar,
+      illustration: uploadedIllustration || oc.illustration,
       age: parseInt(document.getElementById('f_age').value),
       gender: document.querySelector('input[name="gender"]:checked').value,
       height: document.getElementById('f_height').value.trim(),
